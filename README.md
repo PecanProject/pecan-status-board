@@ -1,6 +1,6 @@
 # PEcAn Status Board
 
-[![Scheduled Test](https://github.com/theakhiljha/pecan-status-board/actions/workflowsauto-schedule.yaml/badge.svg)](https://github.com/theakhiljha/pecan-status-board/actions/workflows/auto-schedule.yaml)
+[![Scheduled Test](https://github.com/theakhiljha/pecan-status-board/actions/workflows/auto-schedule.yaml/badge.svg)](https://github.com/theakhiljha/pecan-status-board/actions/workflows/auto-schedule.yaml)
 [![Push Pull Test](https://github.com/theakhiljha/pecan-status-board/actions/workflows/pull-push.yaml/badge.svg)](https://github.com/theakhiljha/pecan-status-board/actions/workflows/pull-push.yaml)
 [![Manual Test](https://github.com/theakhiljha/pecan-status-board/actions/workflows/manual-test.yaml/badge.svg)](https://github.com/theakhiljha/pecan-status-board/actions/workflows/manual-test.yaml)
 
