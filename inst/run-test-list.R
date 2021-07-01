@@ -90,4 +90,7 @@ stages$model_name <-
 stages$site_name <-
   sites_name$sites$sitename[match(stages$site_id, sites_name$sites$id)]
 
-saveRDS(stages, file = "inst/test_result.rds")
+# Generate Data
+stages <- apply(stages,2,as.character)
+write.csv(stages, "inst/test_results.csv")
+
