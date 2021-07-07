@@ -13,6 +13,33 @@ mod_dashboard_ui <- function(id){
   
   tagList(
     fluidRow(
+      shinydashboard::valueBox(
+        "Next Test",
+        subtitle = "At 06:05 UTC",
+        icon = icon("github"),
+        href="https://github.com/PecanProject/pecan-status-board/tree/main/.github/workflows/auto-schedule.yaml",
+        color = "green"
+      ),
+      shinydashboard::valueBox(
+        "Current Time",
+        subtitle = Sys.time(),
+        icon = icon("clock"),
+        color = "maroon"
+      ),
+      shinydashboard::valueBox(
+        "Code",
+        subtitle = "GitHub",
+        icon = icon("code"),
+        href="https://github.com/PecanProject/pecan-status-board",
+        color = "green"
+      )
+    ),
+    fluidRow(
+      shinydashboard::box(width = 4, tags$img(src = "https://github.com/PecanProject/pecan-status-board/actions/workflows/auto-schedule.yaml/badge.svg", height="100%", width="100%", align="center")),
+      shinydashboard::box(width = 4, tags$img(src = "https://github.com/PecanProject/pecan-status-board/actions/workflows/pull-push.yaml/badge.svg", height="100%", width="100%", align="center")),
+      shinydashboard::box(width = 4, tags$img(src = "https://github.com/PecanProject/pecan-status-board/actions/workflows/manual-test.yaml/badge.svg", height="100%", width="100%", align="center"))
+    ),
+    fluidRow(
       column(
         12,
         shinydashboard::box(width = "100%", title = "Scatter Plot",
