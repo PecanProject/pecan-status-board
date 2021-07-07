@@ -6,6 +6,8 @@ Description: Displays the status of integration testing
 License: NCSA
 Imports: 
     config (>= 0.3.1),
+    dplyr,
+    DT,
     ggplot2,
     glue,
     golem (>= 0.3.1),
