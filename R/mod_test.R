@@ -2,38 +2,43 @@
 #'
 #' @description A shiny Module.
 #'
-#' @param id,input,output,session Internal parameters for {shiny}.
+#' @param id,input,osutput,session Internal parameters for {shiny}.
 #'
-#' @noRd
+#' @noRd 
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS tagList 
 
 
-mod_test_ui <- function(id) {
+mod_test_ui <- function(id){
   ns <- NS(id)
-  tagList(fluidRow(
-    shinydashboard::box(
-      width = 12,
-      h2("Run Test, It's as simple as that!"),
-      actionButton(ns("runbutton"), "Run Test Now"),
-      actionButton("viewlogs", "Check Logs", onclick =
-                     "window.open('https://github.com/PecanProject/pecan-status-board/actions', '_blank')")
-    ),
-    br(),
-    shinydashboard::box(width = 12, title = "Test Summary", DT::DTOutput(ns("table")))
-  ))
+  tagList(
+    fluidRow(
+      shinydashboard::box(width = 12, h2("Run Test, It's as simple as that!"),
+                          actionButton(ns("runbutton"), "Run Test Now", icon = icon("play") ),
+                          actionButton("viewlogs", "Check Logs", icon=icon("github-alt"), onclick ="window.open('https://github.com/theakhiljha/pecan-status-board/actions', '_blank')")),
+      br(),
+      shinydashboard::box(width = 12, title = "Result of last run", DT::DTOutput(ns("run_summary"))),
+      br(),
+      shinydashboard::box(width = 12, title = "Complete test summary", DT::DTOutput(ns("table")))
+    )
+  )
 }
 
 #' test Server Functions
 #'
-#' @noRd
+#' @noRd 
 
-mod_test_server <- function(id) {
-  moduleServer(id, function(input, output, session) {
+mod_test_server <- function(id){
+  moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    observeEvent(input$runbutton, {
+    observeEvent(input$runbutton,{
       run_test_dash()
+      shinyWidgets::show_alert(
+        title = "Test Initiated",
+        text = "Click the check logs button to see the workflow",
+        type = "success"
+      )
     }, ignoreInit = TRUE)
     
     
@@ -45,7 +50,6 @@ mod_test_server <- function(id) {
         filter = 'top',
         extensions = c("Buttons", "ColReorder", "Scroller"),
         options = list(
-          rownames = FALSE,
           scrollX = TRUE,
           scrollY = 500,
           scroller = TRUE,
@@ -54,8 +58,26 @@ mod_test_server <- function(id) {
           buttons = c('copy', 'csv', 'excel', 'pdf'),
           dom = "Bfrtip"
         ),
-        style = "bootstrap"
-      )
+        style = "bootstrap")
+    })
+    
+    output$run_summary <- DT::renderDT({
+      result <- read.csv("inst/test_results.csv")
+      last_run <- data.frame(result$site_name,result$site_id,result$model_name,result$model_id,result$met,result$success_status)
+      DT::datatable(
+        last_run,
+        filter = 'top',
+        extensions = c("Buttons", "ColReorder", "Scroller"),
+        options = list(
+          scrollX = TRUE,
+          scrollY = 500,
+          scroller = TRUE,
+          colReorder = TRUE,
+          deferRender = TRUE,
+          buttons = c('copy', 'csv', 'excel', 'pdf'),
+          dom = "Bfrtip"
+        ),
+        style = "bootstrap")
     })
   })
 }
