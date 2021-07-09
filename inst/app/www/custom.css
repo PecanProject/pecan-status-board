@@ -1,0 +1,29 @@
+.main-header .logo {
+  font-family: "Georgia", Times, "Times New Roman", serif;
+  font-weight: bold;
+  font-size: 18px;
+} 
+
+.skin-blue .main-header .logo:hover {
+    background-color: #88DB7F;
+}
+
+.skin-blue .main-header .logo {
+    background-color: #88DB7F;
+}
+
+.skin-blue .main-header .navbar {
+  background-color: #88DB7F;
+}
+
+.nav-tabs>li>a {
+  color: #fff;
+  background-color:green;
+  
+}
+
+.nav-tabs>li>a:hover {
+  color:#fff;
+  background-color:#000;
+}
+             
