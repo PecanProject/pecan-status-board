@@ -21,22 +21,27 @@ usethis::use_package( "shinydashboard" )
 usethis::use_package( "shinydashboardPlus" )
 usethis::use_package( "tidyr" )
 usethis::use_package( "tibble" )
+usethis::use_package("ggplot2")
+usethis::use_package("plotly")
 usethis::use_package( "purrr" )
 usethis::use_package( "httr" )
 usethis::use_package( "glue" )
-usethis::use_package("tibble")
 usethis::use_package("dplyr")
 usethis::use_package("DT")
+usethis::use_package("magrittr")
+usethis::use_package("reshape")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
 golem::add_module( name = "dashboard" ) # Name of the module
 golem::add_module( name = "test" ) # Name of the module
-golem::add_module( name = "report" )
+golem::add_module( name = "weekly_report" )
+golem::add_module( name = "workflows_status")
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
 golem::add_fct( "test_run" )
+golem::add_fct( "fetch_data" )
 
 
 ## External resources

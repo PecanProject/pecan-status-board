@@ -4,7 +4,9 @@
 #'
 #' @param id,input,osutput,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
+#' 
+#' @import magrittr
 #'
 #' @importFrom shiny NS tagList 
 
@@ -31,7 +33,7 @@ mod_test_ui <- function(id){
 mod_test_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+    result <- testrun_report()
     observeEvent(input$runbutton,{
       run_test_dash()
       shinyWidgets::show_alert(
@@ -43,7 +45,6 @@ mod_test_server <- function(id){
     
     
     output$table <- DT::renderDT({
-      result <- read.csv("inst/test_results.csv")
       DT::datatable(
         result,
         rownames = FALSE,
@@ -62,7 +63,6 @@ mod_test_server <- function(id){
     })
     
     output$run_summary <- DT::renderDT({
-      result <- read.csv("inst/test_results.csv")
       last_run <- data.frame(result$site_name,result$site_id,result$model_name,result$model_id,result$met,result$success_status)
       DT::datatable(
         last_run,
@@ -77,7 +77,9 @@ mod_test_server <- function(id){
           buttons = c('copy', 'csv', 'excel', 'pdf'),
           dom = "Bfrtip"
         ),
-        style = "bootstrap")
+        style = "bootstrap") %>%
+        DT::formatStyle(columns = "result.success_status", target = 'cell', backgroundColor = DT::styleEqual(c(TRUE,FALSE), c("#cdffae","#ffcccb"))
+        )
     })
   })
 }

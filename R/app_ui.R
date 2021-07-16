@@ -27,20 +27,23 @@ app_ui <- function() {
         shinydashboard::sidebarMenu(
           shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
           shinydashboard::menuItem("Test", tabName = "test", icon = icon("bolt")),
-          shinydashboard::menuItem("Report", tabName = "report", icon = icon("chart-line"))
+          shinydashboard::menuItem("Report", tabName = "report", icon = icon("chart-line"),
+                                   shinydashboard::menuSubItem("Weekly Status", tabName = "weekly", icon = icon("calendar")),
+                                   shinydashboard::menuSubItem("Workflows Status", tabName = "workflows", icon = icon("tasks")))
         )),
       
       shinydashboard::dashboardBody(
         shinydashboard::tabItems(
           shinydashboard::tabItem("dashboard", mod_dashboard_ui("dashboard_ui_1")),
           shinydashboard::tabItem("test", mod_test_ui("test_ui_1")),
-          shinydashboard::tabItem("report", mod_report_ui("report_ui_1"))
+          shinydashboard::tabItem("weekly", mod_weekly_report_ui("weekly_report_ui_1")),
+          shinydashboard::tabItem("workflows", mod_workflows_satus_ui("workflows_satus_ui_1")
         )
       ),
       # rightsidebar = NULL,
       # title = "Pecan Status Board"
     )
-    
+    )
   )
 }
 

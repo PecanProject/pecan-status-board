@@ -68,11 +68,11 @@ mod_dashboard_ui <- function(id){
 mod_dashboard_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    (result <- read.csv("inst/test_results.csv"))
+    (result <- testrun_report())
     
     output$plot_scatter <- plotly::renderPlotly({
       color_var <-
-        ifelse(grepl("TRUE", result$success_status),"green", "red")
+        ifelse(grepl("TRUE", result$success_status),"red", "green")
       plotly::plot_ly(
         data = result,
         x = ~ site_name,
