@@ -56,7 +56,6 @@ mod_weekly_report_server <- function(id){
       freq <- sapply(df, function(x) table(factor(x, levels = lvls, ordered = TRUE)))
       freq <- t(freq)
       final_data <- data.frame(freq)
-      final_data <- round(final_data / rowSums(final_data) * 100)
       final_data <- tibble::rownames_to_column(final_data, "DAY")
       final_data <- reshape::melt(final_data, id='DAY')
       
@@ -69,14 +68,16 @@ mod_weekly_report_server <- function(id){
                       )) +
         ggplot2::geom_bar(width = 1, stat = "identity") +
         ggplot2::facet_grid(. ~ DAY) +
+        ggplot2::facet_grid(~factor(DAY, levels=select_day())) +
         ggplot2::coord_polar(theta = "y", start = 0) +
         ggplot2::geom_text(ggplot2::aes(label = value),
                            position = ggplot2::position_stack(vjust = 0.5)) +
         ggplot2::labs(title = "", x = "", y = "Pie Chart", fill = "Success") +
         ggplot2::scale_fill_manual(values = c("green", "red")) +
-        ggplot2::theme_bw()
-      
-    }
+        ggplot2::theme(axis.text = ggplot2::element_blank(),
+                       axis.ticks = ggplot2::element_blank(),
+                       panel.grid  = ggplot2::element_blank())
+    } 
     )
     
     output$week_table <- DT::renderDT({

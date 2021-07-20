@@ -27,3 +27,23 @@ testrun_report <- function(){
   }
 }
 
+select_day <- function(){
+  if ((weekdays(Sys.Date())) == "Monday") {
+    c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
+  } else if ((weekdays(Sys.Date())) == "Tuesday") {
+    c("Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","Monday")
+  } else if ((weekdays(Sys.Date())) == "Wednesday") {
+    c("Wednesday","Thursday","Friday","Saturday","Sunday","Monday","Tuesday")
+  } else if ((weekdays(Sys.Date())) == "Thursday") {
+    c("Thursday","Friday","Saturday","Sunday","Monday","Tuesday","Wednesday")
+  } else if ((weekdays(Sys.Date())) == "Friday") {
+    c("Friday","Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday")
+  } else if ((weekdays(Sys.Date())) == "Saturday") {
+    c("Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday")
+  } else if ((weekdays(Sys.Date())) == "Sunday") {
+    c("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")
+  } else {
+    c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
+  }
+}
+

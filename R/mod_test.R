@@ -63,9 +63,11 @@ mod_test_server <- function(id){
     })
     
     output$run_summary <- DT::renderDT({
-      last_run <- data.frame(result$site_name,result$site_id,result$model_name,result$model_id,result$met,result$success_status)
+      
+      last_run <- data.frame(result$workflow_id,result$site_name,result$site_id,result$model_name,result$model_id,result$met,result$success_status)
+      last_run$result.workflow_id <- paste0("<a href='http://141.142.220.191/pecan/08-finished.php?workflowid=",last_run$result.workflow_id,"'>",last_run$result.workflow_id,"</a>")
       DT::datatable(
-        last_run,
+        last_run, escape = FALSE,
         filter = 'top',
         extensions = c("Buttons", "ColReorder", "Scroller"),
         options = list(
