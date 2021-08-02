@@ -29,19 +29,19 @@ testrun_report <- function(){
 
 select_day <- function(){
   if ((weekdays(Sys.Date())) == "Monday") {
-    c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
+    c("Monday","Sunday","Saturday","Friday","Thursday","Wednesday","Tuesday")
   } else if ((weekdays(Sys.Date())) == "Tuesday") {
-    c("Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","Monday")
+    c("Tuesday","Monday","Sunday","Saturday","Friday","Thursday","Wednesday")
   } else if ((weekdays(Sys.Date())) == "Wednesday") {
-    c("Wednesday","Thursday","Friday","Saturday","Sunday","Monday","Tuesday")
+    c("Wednesday","Tuesday","Monday","Sunday","Saturday","Friday","Thursday")
   } else if ((weekdays(Sys.Date())) == "Thursday") {
-    c("Thursday","Friday","Saturday","Sunday","Monday","Tuesday","Wednesday")
+    c("Thursday","Wednesday","Tuesday","Monday","Sunday","Saturday","Friday")
   } else if ((weekdays(Sys.Date())) == "Friday") {
-    c("Friday","Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday")
+    c("Friday","Thursday","Wednesday","Tuesday","Monday","Sunday","Saturday")
   } else if ((weekdays(Sys.Date())) == "Saturday") {
-    c("Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday")
+    c("Saturday","Friday","Thursday","Wednesday","Tuesday","Monday","Sunday")
   } else if ((weekdays(Sys.Date())) == "Sunday") {
-    c("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")
+    c("Sunday","Saturday","Friday","Thursday","Wednesday","Tuesday","Monday")
   } else {
     c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
   }
@@ -49,19 +49,19 @@ select_day <- function(){
 
 select_tabledata <- function(){
   if ((weekdays(Sys.Date())) == "Monday") {
-    c("sites_name", "models_name", "met", "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
+    c("sites_name", "models_name", "met", "Monday","Sunday","Saturday","Friday","Thursday","Wednesday","Tuesday")
   } else if ((weekdays(Sys.Date())) == "Tuesday") {
-    c("sites_name", "models_name", "met","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","Monday")
+    c("sites_name", "models_name", "met","Tuesday","Monday","Sunday","Saturday","Friday","Thursday","Wednesday")
   } else if ((weekdays(Sys.Date())) == "Wednesday") {
-    c("sites_name", "models_name", "met","Wednesday","Thursday","Friday","Saturday","Sunday","Monday","Tuesday")
+    c("sites_name", "models_name", "met","Wednesday","Tuesday","Monday","Sunday","Saturday","Friday","Thursday")
   } else if ((weekdays(Sys.Date())) == "Thursday") {
-    c("sites_name", "models_name", "met","Thursday","Friday","Saturday","Sunday","Monday","Tuesday","Wednesday")
+    c("sites_name", "models_name", "met","Thursday","Wednesday","Tuesday","Monday","Sunday","Saturday","Friday")
   } else if ((weekdays(Sys.Date())) == "Friday") {
-    c("sites_name", "models_name", "met","Friday","Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday")
+    c("sites_name", "models_name", "met","Friday","Thursday","Wednesday","Tuesday","Monday","Sunday","Saturday")
   } else if ((weekdays(Sys.Date())) == "Saturday") {
-    c("sites_name", "models_name", "met","Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday")
+    c("sites_name", "models_name", "met","Saturday","Friday","Thursday","Wednesday","Tuesday","Monday","Sunday")
   } else if ((weekdays(Sys.Date())) == "Sunday") {
-    c("sites_name", "models_name", "met","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")
+    c("sites_name", "models_name", "met","Sunday","Saturday","Friday","Thursday","Wednesday","Tuesday","Monday")
   } else {
     c("sites_name", "models_name", "met","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
   }

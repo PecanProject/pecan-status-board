@@ -114,3 +114,4 @@ mod_workflows_satus_server <- function(id){
 
 ## To be copied in the server
 # mod_workflows_satus_server("workflows_satus_ui_1")
+  
