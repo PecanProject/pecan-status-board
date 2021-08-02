@@ -47,3 +47,23 @@ select_day <- function(){
   }
 }
 
+select_tabledata <- function(){
+  if ((weekdays(Sys.Date())) == "Monday") {
+    c("sites_name", "models_name", "met", "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
+  } else if ((weekdays(Sys.Date())) == "Tuesday") {
+    c("sites_name", "models_name", "met","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","Monday")
+  } else if ((weekdays(Sys.Date())) == "Wednesday") {
+    c("sites_name", "models_name", "met","Wednesday","Thursday","Friday","Saturday","Sunday","Monday","Tuesday")
+  } else if ((weekdays(Sys.Date())) == "Thursday") {
+    c("sites_name", "models_name", "met","Thursday","Friday","Saturday","Sunday","Monday","Tuesday","Wednesday")
+  } else if ((weekdays(Sys.Date())) == "Friday") {
+    c("sites_name", "models_name", "met","Friday","Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday")
+  } else if ((weekdays(Sys.Date())) == "Saturday") {
+    c("sites_name", "models_name", "met","Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday")
+  } else if ((weekdays(Sys.Date())) == "Sunday") {
+    c("sites_name", "models_name", "met","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")
+  } else {
+    c("sites_name", "models_name", "met","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
+  }
+}
+

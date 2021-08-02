@@ -68,7 +68,7 @@ mod_dashboard_ui <- function(id){
 mod_dashboard_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    (result <- testrun_report())
+    result <- testrun_report()
     
     output$plot_scatter <- plotly::renderPlotly({
       color_var <-
@@ -82,10 +82,14 @@ mod_dashboard_server <- function(id){
         type = "scatter",
         size = 10,
         mode = "markers",
+        colors = c("red", "green"),
         marker = list(
           sizemode = "diameter",
           opacity = 0.4,
-          color = color_var
+          line = list(
+            color = 'black',
+            width = 1
+          )
         ))
     })
     

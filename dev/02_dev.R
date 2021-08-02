@@ -42,7 +42,8 @@ golem::add_module( name = "workflows_status")
 ## Creates fct_* and utils_*
 golem::add_fct( "test_run" )
 golem::add_fct( "fetch_data" )
-
+golem::add_fct( "workflow_status" )
+golem::add_fct( "time_diff" )
 
 ## External resources
 ## Creates .js and .css files at inst/app/www

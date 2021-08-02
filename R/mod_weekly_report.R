@@ -20,7 +20,7 @@ mod_weekly_report_ui <- function(id){
       shinydashboard::box(width = 12, title = "Weekly Run Report", DT::DTOutput(ns("week_table")))
     ))
 }
-    
+
 #' weekly_report Server Functions
 #'
 #' @noRd 
@@ -38,14 +38,14 @@ mod_weekly_report_server <- function(id){
     sunday <- read.csv(files[4])
     
     df <- data.frame(
-        Monday = monday$success_status,
-        Tuesday = tuesday$success_status,
-        Wednesday = wednesday$success_status,
-        Thursday = thursday$success_status,
-        Friday = friday$success_status,
-        Saturday = saturday$success_status,
-        Sunday = sunday$success_status
-      )
+      Monday = monday$success_status,
+      Tuesday = tuesday$success_status,
+      Wednesday = wednesday$success_status,
+      Thursday = thursday$success_status,
+      Friday = friday$success_status,
+      Saturday = saturday$success_status,
+      Sunday = sunday$success_status
+    )
     
     # working pie chart
     
@@ -85,7 +85,18 @@ mod_weekly_report_server <- function(id){
       sites_name = update_var$site_name
       models_name = update_var$model_name
       met = update_var$met
+      
+      Monday <- time_diff("data/monday.csv")
+      Tuesday <- time_diff("data/tuesday.csv")
+      Wednesday <- time_diff("data/tuesday.csv")
+      Thursday <- time_diff("data/tuesday.csv")
+      Friday <- time_diff("data/tuesday.csv")
+      Saturday <- time_diff("data/tuesday.csv")
+      Sunday <- time_diff("data/tuesday.csv")
+      
+      df <- data.frame(Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday)
       df <- data.frame(sites_name, models_name, met,df)
+      df <- df[ , select_tabledata()]
       
       DT::datatable(
         df,
@@ -101,15 +112,17 @@ mod_weekly_report_server <- function(id){
           buttons = c('copy', 'csv', 'excel', 'pdf'),
           dom = "Bfrtip"
         ),
-        style = "bootstrap") %>%
-      DT::formatStyle(columns = c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"),target = 'cell', backgroundColor = DT::styleEqual(c(TRUE,FALSE), c("#cdffae","#ffcccb"))
-      )
+        style = "bootstrap")
+      # %>%
+      # DT::formatStyle(columns = c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"),target = 'cell', backgroundColor = DT::styleEqual(c(TRUE,FALSE), c("#cdffae","#ffcccb")
+      # )
+      # )
     })
   })
 }
 
 ## To be copied in the UI
 # mod_weekly_report_ui("weekly_report_ui_1")
-    
+
 ## To be copied in the server
 # mod_weekly_report_server("weekly_report_ui_1")
