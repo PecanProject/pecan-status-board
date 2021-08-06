@@ -9,8 +9,8 @@
 #'
 #' @noRd
 
-workflow_status <- function(){
-  report <- testrun_report()
+
+workflow_status <- function(report){
   server <- rpecanapi::connect("http://141.142.220.191/", "ashiklom", "admin")
   id <- report$workflow_id
   result <- data.frame()

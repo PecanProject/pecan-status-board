@@ -43,21 +43,21 @@ mod_dashboard_ui <- function(id){
       column(
         12,
         shinydashboard::box(width = "100%", title = "Scatter Plot",
-                            (plotly::plotlyOutput(ns("plot_scatter"))))
+                            shinycssloaders::withSpinner((plotly::plotlyOutput(ns("plot_scatter")))))
       )
     ),
     fluidRow(
       column(
         12,
         shinydashboard::box(width = 12,
-                            (plotOutput(ns("bar_plot1"))))
+                            shinycssloaders::withSpinner((plotOutput(ns("bar_plot1")))))
       )
     ),
     fluidRow(
       shinydashboard::box(
-        (plotOutput(ns("bar_plot2")))),
+        shinycssloaders::withSpinner((plotOutput(ns("bar_plot2"))))),
       shinydashboard::box(
-        (plotOutput(ns("bar_plot3")))) 
+        shinycssloaders::withSpinner((plotOutput(ns("bar_plot3")))))
     )
   )
 }

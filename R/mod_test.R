@@ -19,9 +19,9 @@ mod_test_ui <- function(id){
                           actionButton(ns("runbutton"), "Run Test Now", icon = icon("play") ),
                           actionButton("viewlogs", "Check Logs", icon=icon("github-alt"), onclick ="window.open('https://github.com/theakhiljha/pecan-status-board/actions', '_blank')")),
       br(),
-      shinydashboard::box(width = 12, title = "Result of last run", DT::DTOutput(ns("run_summary"))),
+      shinydashboard::box(width = 12, title = "Result of last run", shinycssloaders::withSpinner(DT::DTOutput(ns("run_summary")))),
       br(),
-      shinydashboard::box(width = 12, title = "Complete test summary", DT::DTOutput(ns("table")))
+      shinydashboard::box(width = 12, title = "Complete test summary", shinycssloaders::withSpinner(DT::DTOutput(ns("table"))))
     )
   )
 }

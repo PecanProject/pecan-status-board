@@ -14,10 +14,10 @@ mod_weekly_report_ui <- function(id){
   ns <- NS(id)
   tagList(
     fluidPage(
-      shinydashboard::box(width = 12, title = "Weekly Run Percentage",plotOutput(ns("pie_chart")))
+      shinydashboard::box(width = 12, title = "Weekly Run Percentage",shinycssloaders::withSpinner(plotOutput(ns("pie_chart"))))
     ),
     fluidPage(
-      shinydashboard::box(width = 12, title = "Weekly Run Report", DT::DTOutput(ns("week_table")))
+      shinydashboard::box(width = 12, title = "Weekly Run Report", shinycssloaders::withSpinner(DT::DTOutput(ns("week_table"))))
     ))
 }
 
@@ -80,22 +80,16 @@ mod_weekly_report_server <- function(id){
     } 
     )
     
+    # Model time difference Weekly report
+    
     output$week_table <- DT::renderDT({
+      
       update_var <- testrun_report()
       sites_name = update_var$site_name
       models_name = update_var$model_name
       met = update_var$met
-      
-      Monday <- time_diff("data/monday.csv")
-      Tuesday <- time_diff("data/tuesday.csv")
-      Wednesday <- time_diff("data/tuesday.csv")
-      Thursday <- time_diff("data/tuesday.csv")
-      Friday <- time_diff("data/tuesday.csv")
-      Saturday <- time_diff("data/tuesday.csv")
-      Sunday <- time_diff("data/tuesday.csv")
-      
-      df <- data.frame(Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday)
-      df <- data.frame(sites_name, models_name, met,df)
+      model_diff <- weekly_time_diff()
+      df <- data.frame(models_name,sites_name,met,model_diff)
       df <- df[ , select_tabledata()]
       
       DT::datatable(
@@ -112,11 +106,10 @@ mod_weekly_report_server <- function(id){
           buttons = c('copy', 'csv', 'excel', 'pdf'),
           dom = "Bfrtip"
         ),
-        style = "bootstrap")
+        style = "bootstrap") 
       # %>%
-      # DT::formatStyle(columns = c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"),target = 'cell', backgroundColor = DT::styleEqual(c(TRUE,FALSE), c("#cdffae","#ffcccb")
-      # )
-      # )
+      #   DT::formatStyle(columns = c("Friday","Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday"), target = 'cell', backgroundColor = DT::styleEqual(c("","NA Sec"), c("#cdffae","#ffcccb"), default = "#cdffae")
+      #   )
     })
   })
 }

@@ -7,22 +7,23 @@
 #' @noRd 
 
 #' @importFrom shiny NS tagList 
+#' @import tidyr
 #' @import magrittr
-#' 
+#' @import reshape
 #' 
 mod_workflows_satus_ui <- function(id){
   ns <- NS(id)
   tagList(
     fluidRow(
       shinydashboard::tabBox( width = 12,
-                              tabPanel(title = "Heatmap of Workflows Status", width = 12, plotOutput(ns("heatmap"))
+                              tabPanel(title = "Heatmap of Workflows Status", width = 12, shinycssloaders::withSpinner(plotOutput(ns("heatmap")))
                               ),
-                              tabPanel(title = "Bar Plot of Workflows Status ", width = 12, plotOutput(ns("bar"))
+                              tabPanel(title = "Bar Plot of Workflows Status ", width = 12, shinycssloaders::withSpinner(plotOutput(ns("bar")))
                               )
       )
     ),
     fluidPage(
-      shinydashboard::box(width = 12, title = "Workflow Status", DT::DTOutput(ns("workflow_table")))
+      shinydashboard::box(width = 12, title = "Workflow Status", shinycssloaders::withSpinner(DT::DTOutput(ns("workflow_table"))))
     )
   )
 }
@@ -35,15 +36,13 @@ mod_workflows_satus_ui <- function(id){
 mod_workflows_satus_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    test_result <- workflow_status()
     
     # Get workflows status using API
-    
-    data <- as.data.frame(workflow_status())
-    data <- (melt(data, id.vars = "Workflow_id"))
+    report <- testrun_report()
+    data <- as.data.frame(workflow_status(report))
+    data <- (reshape::melt(data, id.vars = "Workflow_id"))
     data <- as.data.frame(data)
     data$status <- ifelse(grepl("DONE", data$value),"DONE","ERROR")
-    
     data <- tidyr::separate(data = data, col = value, into = c("Val","Start_Time","End_Time","status11"), sep = "  ")
     data <- subset(data, select = -c(Val, status11))
     data$Start_Time <- strptime(data$Start_Time, format = "%Y-%m-%d %H:%M:%OS")
@@ -90,9 +89,11 @@ mod_workflows_satus_server <- function(id){
     
     output$workflow_table <- DT::renderDT({
       test_result <- cast(data = data, formula = Workflow_id~variable, value.var = "final_status")
+      test_data <- testrun_report()
+      test_result <- data.frame(test_data$model_name,test_data$site_name,test_data$met,test_result)
       DT::datatable(
-        test_result,
-        rownames = FALSE,
+        cbind(' ' = '&oplus;', test_result), escape = -2,
+        rownames = TRUE,
         filter = 'top',
         extensions = c("Buttons", "ColReorder", "Scroller"),
         options = list(
@@ -102,9 +103,34 @@ mod_workflows_satus_server <- function(id){
           colReorder = TRUE,
           deferRender = TRUE,
           buttons = c('copy', 'csv', 'excel', 'pdf'),
-          dom = "Bfrtip"
+          dom = "Bfrtip",
+          columnDefs = list(
+            list(visible = FALSE, targets = c(2, 3, 4)),
+            list(orderable = FALSE, className = 'details-control', targets = 1)
+          )
         ),
-        style = "bootstrap")
+        style = "bootstrap",
+        callback = DT::JS(
+          "
+  table.column(1).nodes().to$().css({cursor: 'pointer'});
+  var format = function(d) {
+    return '<div style=\"background-color:#eee; padding: .5em;\"> Site: ' +
+            d[3] + ', Model: ' + d[2] + ', met: ' + d[4] + '</div>';
+  };
+  table.on('click', 'td.details-control', function() {
+    var td = $(this), row = table.row(td.closest('tr'));
+    if (row.child.isShown()) {
+      row.child.hide();
+      td.html('&oplus;');
+    } else {
+      row.child(format(row.data())).show();
+      td.html('&CircleMinus;');
+    }
+  });"
+        )) 
+      # %>%
+      #   DT::formatStyle(columns = c("TRAIT","META","CONFIG","MODEL","OUTPUT","ENSEMBLE","FINISHED"), target = 'cell', backgroundColor = DT::styleEqual(c("","NA Sec ERROR"), c("#cdffae","#ffcccb"), default = "#cdffae")
+      #   )
     })
   })
 }
@@ -114,4 +140,3 @@ mod_workflows_satus_server <- function(id){
 
 ## To be copied in the server
 # mod_workflows_satus_server("workflows_satus_ui_1")
-  
