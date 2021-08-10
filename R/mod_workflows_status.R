@@ -23,7 +23,7 @@ mod_workflows_satus_ui <- function(id){
       )
     ),
     fluidPage(
-      shinydashboard::box(width = 12, title = "Workflow Status", shinycssloaders::withSpinner(DT::DTOutput(ns("workflow_table"))))
+      shinydashboard::box(width = 12, title = "Workflow Status (Time in Seconds)", shinycssloaders::withSpinner(DT::DTOutput(ns("workflow_table"))))
     )
   )
 }
@@ -47,15 +47,16 @@ mod_workflows_satus_server <- function(id){
     data <- subset(data, select = -c(Val, status11))
     data$Start_Time <- strptime(data$Start_Time, format = "%Y-%m-%d %H:%M:%OS")
     data$End_Time <- strptime(data$End_Time, format = "%Y-%m-%d %H:%M:%OS")
-    data$diff <- with(data, difftime(End_Time,Start_Time,units="secs")) %>%
-      paste("Sec")
+    data$diff <- with(data, difftime(End_Time,Start_Time,units="secs"))
     data$final_status <- paste(data$diff, data$status)
-    
+    plot_data <- data
+    plot_data$diff <- paste(plot_data$diff, "sec")
+    plot_data$final_status <- paste(plot_data$diff, plot_data$status)
     # Heat map of Workflows Status using ggplot2
     
     output$heatmap <- renderPlot({
       col.plot<-c("#cdffae","#ffcccb")
-      ggplot2::ggplot(data = data, ggplot2::aes(x = Workflow_id, y = variable, fill =
+      ggplot2::ggplot(data = plot_data, ggplot2::aes(x = Workflow_id, y = variable, fill =
                                                   status)) +
         ggplot2::scale_fill_manual(values = col.plot)  +
         ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(n.dodge = 3)) +
@@ -74,7 +75,7 @@ mod_workflows_satus_server <- function(id){
     # Bar Plot of Workflows Status using ggplot2   
     
     output$bar <- renderPlot({
-      ggplot2::ggplot(data = data, ggplot2::aes(x = Workflow_id, y = variable, fill = status)) +
+      ggplot2::ggplot(data = plot_data, ggplot2::aes(x = Workflow_id, y = variable, fill = status)) +
         ggplot2::geom_bar(stat = "identity", position = ggplot2::position_dodge()) +
         ggplot2::theme_minimal() +
         ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(n.dodge = 4)) +
@@ -89,8 +90,9 @@ mod_workflows_satus_server <- function(id){
     
     output$workflow_table <- DT::renderDT({
       test_result <- cast(data = data, formula = Workflow_id~variable, value.var = "final_status")
+      colnames(test_result) <- c("Workflow ID","TRAIT (s)","META (s)", "CONFIG (s)", "MODEL (s)", "OUTPUT (s)", "ENSEMBLE (s)", "FINISHED (s)")
       test_data <- testrun_report()
-      test_result <- data.frame(test_data$model_name,test_data$site_name,test_data$met,test_result)
+      test_result <- data.frame(test_data$model_name,test_data$site_name,test_data$met,test_result, check.names = FALSE)
       DT::datatable(
         cbind(' ' = '&oplus;', test_result), escape = -2,
         rownames = TRUE,
