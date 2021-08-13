@@ -70,4 +70,4 @@ jobs:
                 git config --global user.name "${GITHUB_ACTOR}"
               git add --all *
               git commit -m "Update Result"
-              git push -q origin develop
+              git push -q origin main
