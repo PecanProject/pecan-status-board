@@ -68,7 +68,7 @@ jobs:
           run: |
               git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com" && \
                 git config --global user.name "${GITHUB_ACTOR}"
-              git pull origin main
+              git pull origin main --allow-unrelated-histories
               git add --all *
               git commit -m "Update Result"
               git push -q origin main
