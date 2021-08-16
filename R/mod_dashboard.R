@@ -43,21 +43,21 @@ mod_dashboard_ui <- function(id){
       column(
         12,
         shinydashboard::box(width = "100%", title = "Scatter Plot",
-                            (plotly::plotlyOutput(ns("plot_scatter"))))
+                            shinycssloaders::withSpinner((plotly::plotlyOutput(ns("plot_scatter")))))
       )
     ),
     fluidRow(
       column(
         12,
         shinydashboard::box(width = 12,
-                            (plotOutput(ns("bar_plot1"))))
+                            shinycssloaders::withSpinner((plotOutput(ns("bar_plot1")))))
       )
     ),
     fluidRow(
       shinydashboard::box(
-        (plotOutput(ns("bar_plot2")))),
+        shinycssloaders::withSpinner((plotOutput(ns("bar_plot2"))))),
       shinydashboard::box(
-        (plotOutput(ns("bar_plot3")))) 
+        shinycssloaders::withSpinner((plotOutput(ns("bar_plot3")))))
     )
   )
 }
@@ -68,11 +68,11 @@ mod_dashboard_ui <- function(id){
 mod_dashboard_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    (result <- read.csv("inst/test_results.csv"))
+    result <- testrun_report()
     
     output$plot_scatter <- plotly::renderPlotly({
       color_var <-
-        ifelse(grepl("TRUE", result$success_status),"green", "red")
+        ifelse(grepl("TRUE", result$success_status),"red", "green")
       plotly::plot_ly(
         data = result,
         x = ~ site_name,
@@ -82,10 +82,14 @@ mod_dashboard_server <- function(id){
         type = "scatter",
         size = 10,
         mode = "markers",
+        colors = c("red", "green"),
         marker = list(
           sizemode = "diameter",
           opacity = 0.4,
-          color = color_var
+          line = list(
+            color = 'black',
+            width = 1
+          )
         ))
     })
     

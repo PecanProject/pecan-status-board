@@ -4,7 +4,9 @@
 #'
 #' @param id,input,osutput,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
+#' 
+#' @import magrittr
 #'
 #' @importFrom shiny NS tagList 
 
@@ -17,9 +19,9 @@ mod_test_ui <- function(id){
                           actionButton(ns("runbutton"), "Run Test Now", icon = icon("play") ),
                           actionButton("viewlogs", "Check Logs", icon=icon("github-alt"), onclick ="window.open('https://github.com/theakhiljha/pecan-status-board/actions', '_blank')")),
       br(),
-      shinydashboard::box(width = 12, title = "Result of last run", DT::DTOutput(ns("run_summary"))),
+      shinydashboard::box(width = 12, title = "Result of last run", shinycssloaders::withSpinner(DT::DTOutput(ns("run_summary")))),
       br(),
-      shinydashboard::box(width = 12, title = "Complete test summary", DT::DTOutput(ns("table")))
+      shinydashboard::box(width = 12, title = "Complete test summary", shinycssloaders::withSpinner(DT::DTOutput(ns("table"))))
     )
   )
 }
@@ -31,7 +33,7 @@ mod_test_ui <- function(id){
 mod_test_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+    result <- testrun_report()
     observeEvent(input$runbutton,{
       run_test_dash()
       shinyWidgets::show_alert(
@@ -43,7 +45,6 @@ mod_test_server <- function(id){
     
     
     output$table <- DT::renderDT({
-      result <- read.csv("inst/test_results.csv")
       DT::datatable(
         result,
         rownames = FALSE,
@@ -62,10 +63,11 @@ mod_test_server <- function(id){
     })
     
     output$run_summary <- DT::renderDT({
-      result <- read.csv("inst/test_results.csv")
-      last_run <- data.frame(result$site_name,result$site_id,result$model_name,result$model_id,result$met,result$success_status)
+      
+      last_run <- data.frame(result$workflow_id,result$site_name,result$site_id,result$model_name,result$model_id,result$met,result$success_status)
+      last_run$result.workflow_id <- paste0("<a href='http://141.142.220.191/pecan/08-finished.php?workflowid=",last_run$result.workflow_id,"'>",last_run$result.workflow_id,"</a>")
       DT::datatable(
-        last_run,
+        last_run, escape = FALSE,
         filter = 'top',
         extensions = c("Buttons", "ColReorder", "Scroller"),
         options = list(
@@ -77,7 +79,9 @@ mod_test_server <- function(id){
           buttons = c('copy', 'csv', 'excel', 'pdf'),
           dom = "Bfrtip"
         ),
-        style = "bootstrap")
+        style = "bootstrap") %>%
+        DT::formatStyle(columns = "result.success_status", target = 'cell', backgroundColor = DT::styleEqual(c(TRUE,FALSE), c("#cdffae","#ffcccb"))
+        )
     })
   })
 }

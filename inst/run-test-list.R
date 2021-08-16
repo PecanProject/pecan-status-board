@@ -81,16 +81,31 @@ while (!finished) {
     print(n = Inf)
 }
 
-stages$success_status <-
-  ifelse(grepl("DONE", stages$stage), TRUE, FALSE)
+stages$success_status <-ifelse(grepl("DONE", stages$stage), TRUE, FALSE)
 models_name <- search.models(server)
 sites_name <- search.sites(server)
-stages$model_name <-
-  models_name$models$model_name[match(stages$model_id, models_name$models$model_id)]
-stages$site_name <-
-  sites_name$sites$sitename[match(stages$site_id, sites_name$sites$id)]
+stages$model_name <- models_name$models$model_name[match(stages$model_id, models_name$models$model_id)]
+stages$site_name <- sites_name$sites$sitename[match(stages$site_id, sites_name$sites$id)]
+stages$met <- test_list$met[match(stages$notes, test_list$notes)]
 
-# Generate Data
+# Generate Data 
+
 stages <- apply(stages,2,as.character)
-write.csv(stages, "inst/test_results.csv")
+if ((weekdays(Sys.Date())) == "Monday") {
+  write.csv(stages, "data/monday.csv")
+} else if ((weekdays(Sys.Date())) == "Tuesday") {
+  write.csv(stages, "data/tuesday.csv")
+} else if ((weekdays(Sys.Date())) == "Wednesday") {
+  write.csv(stages, "data/wednesday.csv")
+} else if ((weekdays(Sys.Date())) == "Thursday") {
+  write.csv(stages, "data/thursday.csv")
+} else if ((weekdays(Sys.Date())) == "Friday") {
+  write.csv(stages, "data/friday.csv")
+} else if ((weekdays(Sys.Date())) == "Saturday") {
+  write.csv(stages, "data/saturday.csv")
+} else if ((weekdays(Sys.Date())) == "Sunday") {
+  write.csv(stages, "data/sunday.csv")
+} else {
+  write.csv(stages, "data/test_results.csv")
+}
 

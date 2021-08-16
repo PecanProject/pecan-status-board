@@ -4,6 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
+#' 
 app_ui <- function() {
   tagList(
     # Leave this function for adding external resources
@@ -27,20 +28,23 @@ app_ui <- function() {
         shinydashboard::sidebarMenu(
           shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
           shinydashboard::menuItem("Test", tabName = "test", icon = icon("bolt")),
-          shinydashboard::menuItem("Report", tabName = "report", icon = icon("chart-line"))
+          shinydashboard::menuItem("Report", tabName = "report", icon = icon("chart-line"),
+                                   shinydashboard::menuSubItem("Weekly Status", tabName = "weekly", icon = icon("calendar")),
+                                   shinydashboard::menuSubItem("Workflows Status", tabName = "workflows", icon = icon("tasks")))
         )),
       
       shinydashboard::dashboardBody(
         shinydashboard::tabItems(
           shinydashboard::tabItem("dashboard", mod_dashboard_ui("dashboard_ui_1")),
           shinydashboard::tabItem("test", mod_test_ui("test_ui_1")),
-          shinydashboard::tabItem("report", mod_report_ui("report_ui_1"))
-        )
-      ),
-      # rightsidebar = NULL,
-      # title = "Pecan Status Board"
+          shinydashboard::tabItem("weekly", mod_weekly_report_ui("weekly_report_ui_1")),
+          shinydashboard::tabItem("workflows", mod_workflows_satus_ui("workflows_satus_ui_1")
+          )
+        ),
+        # rightsidebar = NULL,
+        # title = "Pecan Status Board"
+      )
     )
-    
   )
 }
 
@@ -64,7 +68,7 @@ golem_add_external_resources <- function(){
     favicon(),
     bundle_resources(
       path = app_sys('app/www'),
-      app_title = 'statusboard'
+      app_title = 'PEcAn Status Board'
     )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
