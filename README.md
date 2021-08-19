@@ -3,7 +3,7 @@
 <div align="center">
   
 [![Scheduled Test](https://github.com/PecanProject/pecan-status-board/actions/workflows/auto-schedule.yaml/badge.svg)](https://github.com/PecanProject/pecan-status-board/actions/workflows/auto-schedule.yaml)
-[![Push Pull Request](https://github.com/PecanProject/pecan-status-board/actions/workflows/pull-push.yaml/badge.svg)](https://github.com/PecanProject/pecan-status-board/actions/workflows/pull-push.yaml)
+[![Push-Pull CI](https://github.com/PecanProject/pecan-status-board/actions/workflows/push-ci.yaml/badge.svg)](https://github.com/PecanProject/pecan-status-board/actions/workflows/push-ci.yaml)
 [![Manual Test](https://github.com/PecanProject/pecan-status-board/actions/workflows/manual-test.yaml/badge.svg)](https://github.com/PecanProject/pecan-status-board/actions/workflows/manual-test.yaml)
 <img src="https://img.shields.io/badge/R-276DC3?style=for-the-badge&logo=r&logoColor=white" />
 <img src="https://img.shields.io/badge/CSS-239120?style=for-the-badge&logo=css3&logoColor=white" />

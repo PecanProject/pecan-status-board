@@ -1,4 +1,4 @@
-name: Push-Pulll CI
+name: Push-Pull CI
 
 on:  
   push:
