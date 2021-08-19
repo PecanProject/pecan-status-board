@@ -1,4 +1,4 @@
-name: Push-Pull Request
+name: Push-Pulll CI
 
 on:  
   push:
@@ -44,31 +44,14 @@ jobs:
         - name: Install dependencies
           run: |
             remotes::install_deps(dependencies = TRUE)
-            install.packages("XML")
+            remotes::install_cran("lintr")
             install.packages("devtools")
             devtools::install_github("PecanProject/rpecanapi")
-            install.packages("dplyr")
-            install.packages("tidyr")
-          shell: Rscript {0}
-          
-        - name: Generate data
-          run: |
-            source("inst/run-test-list.R")
           shell: Rscript {0}
       
-        
-        - name: Session info
-          run: |
-            options(width = 100)
-            pkgs <- installed.packages()[, "Package"]
-            sessioninfo::session_info(pkgs, include_base = TRUE)
+        - name: Install package
+          run: R CMD INSTALL .
+
+        - name: Lint
+          run: lintr::lint_package()
           shell: Rscript {0}
-          
-        - name: Push to github
-          run: |
-              git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com" && \
-                git config --global user.name "${GITHUB_ACTOR}"
-              git pull origin main
-              git add --all *
-              git commit -m "Update Result"
-              git push -q origin main
