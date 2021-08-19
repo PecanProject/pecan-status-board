@@ -36,7 +36,7 @@ mod_dashboard_ui <- function(id){
     ),
     fluidRow(
       shinydashboard::box(width = 4, tags$img(src = "https://github.com/PecanProject/pecan-status-board/actions/workflows/auto-schedule.yaml/badge.svg", height="100%", width="100%", align="center")),
-      shinydashboard::box(width = 4, tags$img(src = "https://github.com/PecanProject/pecan-status-board/actions/workflows/pull-push.yaml/badge.svg", height="100%", width="100%", align="center")),
+      shinydashboard::box(width = 4, tags$img(src = "https://github.com/PecanProject/pecan-status-board/actions/workflows/push-ci.yaml/badge.svg", height="100%", width="100%", align="center")),
       shinydashboard::box(width = 4, tags$img(src = "https://github.com/PecanProject/pecan-status-board/actions/workflows/manual-test.yaml/badge.svg", height="100%", width="100%", align="center"))
     ),
     fluidRow(

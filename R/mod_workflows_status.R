@@ -67,7 +67,7 @@ mod_workflows_satus_server <- function(id){
         ggplot2::coord_fixed() +
         ggplot2::labs(title = "Heat map",
                       x = "workflow_id",
-                      y = "value",
+                      y = "stages",
                       fill = "final status")
     })
     
