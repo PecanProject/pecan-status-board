@@ -10,6 +10,12 @@ app_sys <- function(...){
   system.file(..., package = "statusboard")
 }
 
+get_csv_file <- function(filename) {
+  if (! is.na(filename)) {
+    read.csv(paste0(Sys.getenv("DATA_URL"), filename))
+  }
+}
+
 
 #' Read App Config
 #' @param value Value to retrieve from the config file. 

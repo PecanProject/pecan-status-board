@@ -1,6 +1,6 @@
 Package: statusboard
 Title: PEcAn Status Board
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: person('Akhil', 'Jha', email = 'Akhilkumarjha9@gmail.com', role = c('cre', 'aut'))
 Description: Displays the status of integration testing
 License: NCSA
@@ -19,12 +19,15 @@ Imports:
     reshape,
     rpecanapi,
     shiny (>= 1.6.0),
+    shinycssloaders,
     shinydashboard,
     shinydashboardPlus,
     shinyWidgets,
     thinkr,
     tibble,
     tidyr
+Remotes:
+    github::PecanProject/rpecanapi
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
