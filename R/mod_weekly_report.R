@@ -29,13 +29,13 @@ mod_weekly_report_server <- function(id){
     ns <- session$ns
     
     files = list.files(path="./data/", pattern="*.csv", full.names=TRUE)
-    monday <- read.csv(files[2])
-    tuesday <- read.csv(files[6])
-    wednesday <- read.csv(files[7])
-    thursday <- read.csv(files[5])
-    friday <- read.csv(files[1])
-    saturday <- read.csv(files[3])
-    sunday <- read.csv(files[4])
+    monday <- get_csv_file(files[2])
+    tuesday <- get_csv_file(files[6])
+    wednesday <- get_csv_file(files[7])
+    thursday <- get_csv_file(files[5])
+    friday <- get_csv_file(files[1])
+    saturday <- get_csv_file(files[3])
+    sunday <- get_csv_file(files[4])
     
     df <- data.frame(
       Monday = monday$success_status,

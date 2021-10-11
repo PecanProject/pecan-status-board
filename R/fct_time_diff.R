@@ -37,25 +37,25 @@ model_time_diff <- function(df) {
 
 weekly_time_diff <- function(){
   # Time difference of models on monday.    
-  report <- read.csv("data/monday.csv")
+  report <- get_csv_file("data/monday.csv")
   mon <- model_time_diff(report)
   # Time difference of models on tuesday.  
-  report <- read.csv("data/tuesday.csv")
+  report <- get_csv_file("data/tuesday.csv")
   tue <- model_time_diff(report)
   # Time difference of models on wednesday.  
-  report <- read.csv("data/wednesday.csv")
+  report <- get_csv_file("data/wednesday.csv")
   wed <- model_time_diff(report)
   # Time difference of models on thursday.  
-  report <- read.csv("data/thursday.csv")
+  report <- get_csv_file("data/thursday.csv")
   thu <- model_time_diff(report)
   # Time difference of models on friday.  
-  report <- read.csv("data/friday.csv")
+  report <- get_csv_file("data/friday.csv")
   fri <- model_time_diff(report)
   # Time difference of models on saturday.  
-  report <- read.csv("data/saturday.csv")
+  report <- get_csv_file("data/saturday.csv")
   sat <- model_time_diff(report)
   # Time difference of models on sunday.  
-  report <- read.csv("data/sunday.csv")
+  report <- get_csv_file("data/sunday.csv")
   sun <- model_time_diff(report)
   
   df <- tibble::tibble(

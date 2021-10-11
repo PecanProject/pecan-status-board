@@ -9,21 +9,21 @@
 
 testrun_report <- function(){
   if ((weekdays(Sys.Date())) == "Monday") {
-    read.csv("data/monday.csv")
+    get_csv_file("data/monday.csv")
   } else if ((weekdays(Sys.Date())) == "Tuesday") {
-    read.csv("data/tuesday.csv")
+    get_csv_file("data/tuesday.csv")
   } else if ((weekdays(Sys.Date())) == "Wednesday") {
-    read.csv("data/wednesday.csv")
+    get_csv_file("data/wednesday.csv")
   } else if ((weekdays(Sys.Date())) == "Thursday") {
-    read.csv("data/thursday.csv")
+    get_csv_file("data/thursday.csv")
   } else if ((weekdays(Sys.Date())) == "Friday") {
-    read.csv("data/friday.csv")
+    get_csv_file("data/friday.csv")
   } else if ((weekdays(Sys.Date())) == "Saturday") {
-    read.csv("data/saturday.csv")
+    get_csv_file("data/saturday.csv")
   } else if ((weekdays(Sys.Date())) == "Sunday") {
-    read.csv("data/sunday.csv")
+    get_csv_file("data/sunday.csv")
   } else {
-    read.csv("data/test_results.csv")
+    get_csv_file("data/test_results.csv")
   }
 }
 
