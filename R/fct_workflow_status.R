@@ -11,7 +11,7 @@
 
 
 workflow_status <- function(report){
-  server <- rpecanapi::connect("http://141.142.220.191/", "ashiklom", "admin")
+  server <- rpecanapi::connect("http://141.142.217.168/", "ashiklom", "admin")
   id <- report$workflow_id
   result <- data.frame()
   for (i in id) {
