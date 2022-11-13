@@ -2,7 +2,7 @@ name: Scheduled Test Maespa
 
 on:
   schedule:
-    - cron: "0 0 20 ? * SAT *"
+    - cron: "0 20 * * Sat"
 
 jobs:
   generate-data:
