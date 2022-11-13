@@ -37,6 +37,11 @@ golem::add_module( name = "dashboard" ) # Name of the module
 golem::add_module( name = "test" ) # Name of the module
 golem::add_module( name = "weekly_report" )
 golem::add_module( name = "workflows_status")
+golem::add_module( name = "sipnet")
+golem::add_module( name = "basgra")
+golem::add_module( name = "cruncep")
+golem::add_module( name = "ed2")
+golem::add_module( name = "biocro")
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
@@ -44,6 +49,8 @@ golem::add_fct( "test_run" )
 golem::add_fct( "fetch_data" )
 golem::add_fct( "workflow_status" )
 golem::add_fct( "time_diff" )
+golem::add_fct( "workflow_count" )
+golem::add_fct( "error_log" )
 
 ## External resources
 ## Creates .js and .css files at inst/app/www

@@ -72,17 +72,17 @@ sipnet_report <- function(){
 }
 
 ed2_report <- function(){
-  read.csv("data/ed2-test/ed2-test_results.csv")
-}
+    read.csv("data/ed2-test/ed2-test_results.csv")
+  }
 
 maespa_report <- function(){
-  read.csv("data/maespa-test/maespa-test_results.csv")
+    read.csv("data/maespa-test/maespa-test_results.csv")
 }
 
 biocro_report <- function(){
-  read.csv("data/biocro-test/biocro-test_results.csv")
-}
+    read.csv("data/biocro-test/biocro-test_results.csv")
+  }
 
 basgra_report <- function(){
-  read.csv("data/basgra-test/basgra-test_results.csv")
+    read.csv("data/basgra-test/basgra-test_results.csv")
 }
