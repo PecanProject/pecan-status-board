@@ -1,4 +1,4 @@
-name: Scheduled Test
+name: Scheduled Test ED2
 
 on:
   schedule:
