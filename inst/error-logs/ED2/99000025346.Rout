@@ -1,0 +1,281 @@
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #!/usr/bin/env Rscript
+> #-------------------------------------------------------------------------------
+> # Copyright (c) 2012 University of Illinois, NCSA.
+> # All rights reserved. This program and the accompanying materials
+> # are made available under the terms of the
+> # University of Illinois/NCSA Open Source License
+> # which accompanies this distribution, and is available at
+> # http://opensource.ncsa.illinois.edu/license.html
+> #-------------------------------------------------------------------------------
+> 
+> # ----------------------------------------------------------------------
+> # Load required libraries
+> # ----------------------------------------------------------------------
+> library("PEcAn.all")
+Loading required package: PEcAn.DB
+Loading required package: PEcAn.settings
+Loading required package: PEcAn.MA
+Loading required package: PEcAn.logger
+Loading required package: PEcAn.utils
+
+Attaching package: ‘PEcAn.utils’
+
+The following object is masked from ‘package:utils’:
+
+    download.file
+
+Loading required package: PEcAn.uncertainty
+Loading required package: PEcAn.data.atmosphere
+Loading required package: PEcAn.data.land
+Loading required package: PEcAn.data.remote
+Loading required package: PEcAn.assim.batch
+Loading required package: PEcAn.emulator
+Loading required package: PEcAn.priors
+Loading required package: PEcAn.benchmark
+Loading required package: PEcAn.remote
+Loading required package: PEcAn.workflow
+> 
+> 
+> # --------------------------------------------------
+> # get command-line arguments
+> args <- get_args()
+> 
+> # make sure always to call status.end
+> options(warn = 1)
+> options(error = quote({
++   try(PEcAn.utils::status.end("ERROR"))
++   try(PEcAn.remote::kill.tunnel(settings))
++   if (!interactive()) {
++     q(status = 1)
++   }
++ }))
+> 
+> # ----------------------------------------------------------------------
+> # PEcAn Workflow
+> # ----------------------------------------------------------------------
+> # Open and read in settings file for PEcAn run.
+> settings <- PEcAn.settings::read.settings(args$settings)
+2022-11-12 17:23:21 INFO   [PEcAn.settings::read.settings] : 
+   Loading inpufile= pecan.xml 
+> 
+> # Check for additional modules that will require adding settings
+> if ("benchmarking" %in% names(settings)) {
++   library(PEcAn.benchmark)
++   settings <- papply(settings, read_settings_BRR)
++ }
+> 
+> if ("sitegroup" %in% names(settings)) {
++   if (is.null(settings$sitegroup$nSite)) {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(settings,
++       sitegroupId = settings$sitegroup$id
++     )
++   } else {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(
++       settings,
++       sitegroupId = settings$sitegroup$id,
++       nSite = settings$sitegroup$nSite
++     )
++   }
++   # zero out so don't expand a second time if re-reading
++   settings$sitegroup <- NULL
++ }
+> 
+> # Update/fix/check settings.
+> # Will only run the first time it's called, unless force=TRUE
+> settings <-
++   PEcAn.settings::prepare.settings(settings, force = FALSE)
+2022-11-12 17:23:21 INFO   [fix.deprecated.settings] : 
+   Fixing deprecated settings... 
+2022-11-12 17:23:21 INFO   [fix.deprecated.settings] : 
+   settings$run$dbfiles is deprecated. use settings$database$dbfiles 
+   instead 
+2022-11-12 17:23:21 INFO   [update.settings] : 
+   Fixing deprecated settings... 
+2022-11-12 17:23:21 INFO   [check.settings] : Checking settings... 
+2022-11-12 17:23:21 INFO   [check.database] : 
+   Successfully connected to database : postgres bety bety bety PostgreSQL 
+2022-11-12 17:23:21 INFO   [check.database.settings] : 
+   Writing all runs/configurations to database. 
+2022-11-12 17:23:21 INFO   [check.ensemble.settings] : 
+   No start date passed to ensemble - using the run date ( 2004 ). 
+2022-11-12 17:23:21 INFO   [check.ensemble.settings] : 
+   No end date passed to ensemble - using the run date ( 2004 ). 
+2022-11-12 17:23:21 INFO   [fn] : 
+   Setting site name to Niwot Ridge Forest/LTER NWT1 (US-NR1) 
+2022-11-12 17:23:21 INFO   [fn] : 
+   Setting site lat to 40.0329 
+2022-11-12 17:23:21 INFO   [fn] : 
+   Setting site lon to -105.546 
+2022-11-12 17:23:21 INFO   [check.settings] : 
+   Setting meta.analysis threshold to 1.2 
+2022-11-12 17:23:21 INFO   [check.settings] : 
+   Setting meta.analysis update to only update if no previous meta analysis 
+   was found 
+2022-11-12 17:23:21 INFO   [check.model.settings] : 
+   Setting model type to ED2 
+2022-11-12 17:23:21 INFO   [check.model.settings] : 
+   Setting model revision to git 
+2022-11-12 17:23:21 INFO   [check.model.settings] : 
+   Option to delete raw model output not set or not logical. Will keep all 
+   model output. 
+2022-11-12 17:23:21 INFO   [check.model.settings] : 
+   Setting model binary to /usr/local/bin/ed.git 
+2022-11-12 17:23:21 INFO   [fn] : path 
+2022-11-12 17:23:21 INFO   [fn] : path 
+2022-11-12 17:23:21 INFO   [fn] : 
+   path /data/ed_inputs/glu/ 
+2022-11-12 17:23:21 INFO   [fn] : 
+   path /data/ed_inputs/glu/ 
+2022-11-12 17:23:22 INFO   [fn] : 
+   path /data/ed_inputs/ 
+2022-11-12 17:23:22 INFO   [fn] : 
+   path /data/ed_inputs/ 
+2022-11-12 17:23:22 INFO   [fn] : 
+   path /data/oge2OLD/OGE2_ 
+2022-11-12 17:23:22 INFO   [fn] : 
+   path /data/oge2OLD/OGE2_ 
+2022-11-12 17:23:22 INFO   [fn] : 
+   path /data/faoOLD/FAO_ 
+2022-11-12 17:23:22 INFO   [fn] : 
+   path /data/faoOLD/FAO_ 
+2022-11-12 17:23:22 INFO   [fn] : 
+   Missing optional input : pss 
+2022-11-12 17:23:22 INFO   [fn] : 
+   Missing optional input : site 
+2022-11-12 17:23:22 INFO   [fn] : 
+   Missing optional input : css 
+2022-11-12 17:23:22 INFO   [fn] : 
+   Missing optional input : initcond 
+2022-11-12 17:23:22 INFO   [check.workflow.settings] : 
+   output folder = /data/workflows/PEcAn_99000025346 
+2022-11-12 17:23:22 INFO   [check.settings] : 
+   Storing pft temperate.Late_Hardwood in 
+   /data/workflows/PEcAn_99000025346/pft/temperate.Late_Hardwood 
+> 
+> # Write pecan.CHECKED.xml
+> PEcAn.settings::write.settings(settings, outputfile = "pecan.CHECKED.xml")
+[1] "/data/workflows/PEcAn_99000025346/pecan.CHECKED.xml"
+> 
+> # start from scratch if no continue is passed in
+> status_file <- file.path(settings$outdir, "STATUS")
+> if (args$continue && file.exists(status_file)) {
++   file.remove(status_file)
++ }
+> 
+> # Do conversions
+> settings <- PEcAn.workflow::do_conversions(settings)
+2022-11-12 17:23:22 DEBUG  [PEcAn.workflow::do_conversions] : 
+   do.conversion outdir /data/dbfiles 
+2022-11-12 17:23:22 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  met 
+2022-11-12 17:23:22 INFO   [PEcAn.workflow::do_conversions] : 
+   calling met.process: 
+2022-11-12 17:23:22 DEBUG  [read.register] : 
+   regional 1135 37 NARR application/x-netcdf pecan.zip 
+2022-11-12 17:23:22 DEBUG  [PEcAn.data.atmosphere::met.process] : 
+   TRUE TRUE TRUE TRUE FALSE 
+2022-11-12 17:23:22 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_inputs download.NARR NA localhost /data/dbfiles/NARR_site_1135 
+   NARR application/x-netcdf 1135 2004-01-01 2004-12-31 
+2022-11-12 17:23:22 INFO   [PEcAn.DB::convert_input] : 
+   start CHECK convert_inputs download.NARR NA localhost 
+   /data/dbfiles/NARR_site_1135/ NARR application/x-netcdf 1135 2004-01-01 
+   2004-12-31 FALSE FALSE 
+2022-11-12 17:23:22 WARN   [dbfile.input.check] : 
+   Found multiple matching inputs. Checking for one with associate files on 
+   host machine 
+          id site_id                            notes          created_at
+1        285    1135 Original netCDF NARR off the web 2014-03-20 18:44:06
+2 1000013288    1135                                  2017-06-08 15:15:37
+           updated_at          start_date            end_date             name
+1 2014-05-21 18:41:35 1979-01-01 06:00:00 2014-01-01 05:59:00             NARR
+2 2017-10-17 22:23:21 1996-01-01 00:00:00 2014-12-31 00:00:00 NARR_site_1-4919
+  parent_id user_id access_level  raw format_id
+1         4       4            4 TRUE        37
+2        NA      NA            4   NA        37
+2022-11-12 17:23:22 INFO   [dbfile.input.check] : 
+   File not found on host machine. Returning Valid input with file 
+   associated on different machine if possible 
+2022-11-12 17:23:22 DEBUG  [PEcAn.DB::convert_input] : 
+   File id = 4141 File name = NARR File path = 
+   /projectnb/dietzelab/pecan.data/input/NARR Input id = 285 10 
+2022-11-12 17:23:22 INFO   [PEcAn.DB::convert_input] : 
+   end CHECK for existing input record. 
+2022-11-12 17:23:22 INFO   [PEcAn.DB::convert_input] : 
+   Valid Input record found that spans desired dates, but valid files do 
+   not exist on this machine. 
+2022-11-12 17:23:22 INFO   [PEcAn.DB::convert_input] : 
+   Downloading all years of Valid input to ensure consistency 
+2022-11-12 17:23:22 DEBUG  [PEcAn.DB::convert_input] : 
+   input.args converted to string 
+2022-11-12 17:23:22 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_input executing the following function: 
+   PEcAn.data.atmosphere::download.NARR(site_id='1135', lat.in=40.0329, 
+   lon.in=-105.546, model=NULL, scenario=NULL, ensemble_member=NULL, 
+   method=NULL, overwrite=FALSE, outfolder='/data/dbfiles/NARR_site_1135/', 
+   start_date='1979-01-01', end_date='2014-01-01', 
+   dbparms=list(host='postgres', dbname='bety', user='bety', 
+   password='bety', driver='PostgreSQL', write='TRUE')) 
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> remotefunc <- function() {PEcAn.data.atmosphere::download.NARR(site_id='1135', lat.in=40.0329, lon.in=-105.546, model=NULL, scenario=NULL, ensemble_member=NULL, method=NULL, overwrite=FALSE, outfolder='/data/dbfiles/NARR_site_1135/', start_date='1979-01-01', end_date='2014-01-01', dbparms=list(host='postgres', dbname='bety', user='bety', password='bety', driver='PostgreSQL', write='TRUE'))}
+> remoteout <- remotefunc()
+2022-11-12 17:23:23 DEBUG  [PEcAn.data.atmosphere::download.NARR] : 
+   Downloading from: 
+   ftp://ftp.cdc.noaa.gov/Datasets/NARR/monolevel/pres.sfc.2014.nc to: 
+   /data/dbfiles/NARR_site_1135//pres.sfc.2014.nc 
+Error in if (method == "ncftpget") { : argument is of length zero
+Calls: remotefunc -> <Anonymous> -> <Anonymous>
+Execution halted
+2022-11-12 17:23:23 DEBUG  [PEcAn.remote::remote.execute.R] : 1 
+2022-11-12 17:23:23 DEBUG  [PEcAn.remote::remote.execute.R] : 1 
+2022-11-12 17:23:23 INFO   [PEcAn.DB::convert_input] : 
+   RESULTS: convert_input 
+2022-11-12 17:23:23 INFO   [PEcAn.DB::convert_input] : 1 
+2022-11-12 17:23:23 DEBUG  [PEcAn.DB::convert_input] : 
+   Processing data failed, please check validity of args:site_id='1135', 
+   lat.in=40.0329, lon.in=-105.546, model=NULL, scenario=NULL, 
+   ensemble_member=NULL, method=NULL, overwrite=FALSE, 
+   outfolder='/data/dbfiles/NARR_site_1135/', start_date='1979-01-01', 
+   end_date='2014-01-01', dbparms=list(host='postgres', dbname='bety', 
+   user='bety', password='bety', driver='PostgreSQL', write='TRUE') 
+2022-11-12 17:23:23 SEVERE [PEcAn.DB::convert_input] : 
+   Unable to process data using this function:download.NARR 
+> proc.time()
+   user  system elapsed 
+  3.771   0.395   4.254 

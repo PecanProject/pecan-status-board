@@ -9,21 +9,21 @@
 
 testrun_report <- function(){
   if ((weekdays(Sys.Date())) == "Monday") {
-    get_csv_file("data/monday.csv")
+    read.csv("data/overall-test/monday.csv")
   } else if ((weekdays(Sys.Date())) == "Tuesday") {
-    get_csv_file("data/tuesday.csv")
+    read.csv("data/overall-test/tuesday.csv")
   } else if ((weekdays(Sys.Date())) == "Wednesday") {
-    get_csv_file("data/wednesday.csv")
+    read.csv("data/overall-test/wednesday.csv")
   } else if ((weekdays(Sys.Date())) == "Thursday") {
-    get_csv_file("data/thursday.csv")
+    read.csv("data/overall-test/thursday.csv")
   } else if ((weekdays(Sys.Date())) == "Friday") {
-    get_csv_file("data/friday.csv")
+    read.csv("data/overall-test/friday.csv")
   } else if ((weekdays(Sys.Date())) == "Saturday") {
-    get_csv_file("data/saturday.csv")
+    read.csv("data/overall-test/saturday.csv")
   } else if ((weekdays(Sys.Date())) == "Sunday") {
-    get_csv_file("data/sunday.csv")
+    read.csv("data/overall-test/sunday.csv")
   } else {
-    get_csv_file("data/test_results.csv")
+    read.csv("data/overall-test/test_results.csv")
   }
 }
 
@@ -67,3 +67,22 @@ select_tabledata <- function(){
   }
 }
 
+sipnet_report <- function(){
+  read.csv("data/sipnet-test/sipnet-test_results.csv")
+}
+
+ed2_report <- function(){
+  read.csv("data/ed2-test/ed2-test_results.csv")
+}
+
+maespa_report <- function(){
+  read.csv("data/maespa-test/maespa-test_results.csv")
+}
+
+biocro_report <- function(){
+  read.csv("data/biocro-test/biocro-test_results.csv")
+}
+
+basgra_report <- function(){
+  read.csv("data/basgra-test/basgra-test_results.csv")
+}

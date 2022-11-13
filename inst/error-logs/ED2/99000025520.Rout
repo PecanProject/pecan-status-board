@@ -1,0 +1,254 @@
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #!/usr/bin/env Rscript
+> #-------------------------------------------------------------------------------
+> # Copyright (c) 2012 University of Illinois, NCSA.
+> # All rights reserved. This program and the accompanying materials
+> # are made available under the terms of the
+> # University of Illinois/NCSA Open Source License
+> # which accompanies this distribution, and is available at
+> # http://opensource.ncsa.illinois.edu/license.html
+> #-------------------------------------------------------------------------------
+> 
+> # ----------------------------------------------------------------------
+> # Load required libraries
+> # ----------------------------------------------------------------------
+> library("PEcAn.all")
+Loading required package: PEcAn.DB
+Loading required package: PEcAn.settings
+Loading required package: PEcAn.MA
+Loading required package: PEcAn.logger
+Loading required package: PEcAn.utils
+
+Attaching package: ‘PEcAn.utils’
+
+The following object is masked from ‘package:utils’:
+
+    download.file
+
+Loading required package: PEcAn.uncertainty
+Loading required package: PEcAn.data.atmosphere
+Loading required package: PEcAn.data.land
+Loading required package: PEcAn.data.remote
+Loading required package: PEcAn.assim.batch
+Loading required package: PEcAn.emulator
+Loading required package: PEcAn.priors
+Loading required package: PEcAn.benchmark
+Loading required package: PEcAn.remote
+Loading required package: PEcAn.workflow
+> 
+> 
+> # --------------------------------------------------
+> # get command-line arguments
+> args <- get_args()
+> 
+> # make sure always to call status.end
+> options(warn = 1)
+> options(error = quote({
++   try(PEcAn.utils::status.end("ERROR"))
++   try(PEcAn.remote::kill.tunnel(settings))
++   if (!interactive()) {
++     q(status = 1)
++   }
++ }))
+> 
+> # ----------------------------------------------------------------------
+> # PEcAn Workflow
+> # ----------------------------------------------------------------------
+> # Open and read in settings file for PEcAn run.
+> settings <- PEcAn.settings::read.settings(args$settings)
+2022-11-12 19:38:30 INFO   [PEcAn.settings::read.settings] : 
+   Loading inpufile= pecan.xml 
+> 
+> # Check for additional modules that will require adding settings
+> if ("benchmarking" %in% names(settings)) {
++   library(PEcAn.benchmark)
++   settings <- papply(settings, read_settings_BRR)
++ }
+> 
+> if ("sitegroup" %in% names(settings)) {
++   if (is.null(settings$sitegroup$nSite)) {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(settings,
++       sitegroupId = settings$sitegroup$id
++     )
++   } else {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(
++       settings,
++       sitegroupId = settings$sitegroup$id,
++       nSite = settings$sitegroup$nSite
++     )
++   }
++   # zero out so don't expand a second time if re-reading
++   settings$sitegroup <- NULL
++ }
+> 
+> # Update/fix/check settings.
+> # Will only run the first time it's called, unless force=TRUE
+> settings <-
++   PEcAn.settings::prepare.settings(settings, force = FALSE)
+2022-11-12 19:38:30 INFO   [fix.deprecated.settings] : 
+   Fixing deprecated settings... 
+2022-11-12 19:38:30 INFO   [fix.deprecated.settings] : 
+   settings$run$dbfiles is deprecated. use settings$database$dbfiles 
+   instead 
+2022-11-12 19:38:30 INFO   [update.settings] : 
+   Fixing deprecated settings... 
+2022-11-12 19:38:30 INFO   [check.settings] : Checking settings... 
+2022-11-12 19:38:30 INFO   [check.database] : 
+   Successfully connected to database : postgres bety bety bety PostgreSQL 
+2022-11-12 19:38:30 INFO   [check.database.settings] : 
+   Writing all runs/configurations to database. 
+2022-11-12 19:38:30 INFO   [check.ensemble.settings] : 
+   No start date passed to ensemble - using the run date ( 2004 ). 
+2022-11-12 19:38:30 INFO   [check.ensemble.settings] : 
+   No end date passed to ensemble - using the run date ( 2004 ). 
+2022-11-12 19:38:30 INFO   [fn] : 
+   Setting site name to Metolius-first young aged pine (US-Me5) 
+2022-11-12 19:38:30 INFO   [fn] : 
+   Setting site lat to 44.4372 
+2022-11-12 19:38:30 INFO   [fn] : 
+   Setting site lon to -121.567 
+2022-11-12 19:38:30 INFO   [check.settings] : 
+   Setting meta.analysis threshold to 1.2 
+2022-11-12 19:38:30 INFO   [check.settings] : 
+   Setting meta.analysis update to only update if no previous meta analysis 
+   was found 
+2022-11-12 19:38:30 INFO   [check.model.settings] : 
+   Setting model type to ED2 
+2022-11-12 19:38:30 INFO   [check.model.settings] : 
+   Setting model revision to git 
+2022-11-12 19:38:30 INFO   [check.model.settings] : 
+   Option to delete raw model output not set or not logical. Will keep all 
+   model output. 
+2022-11-12 19:38:31 INFO   [check.model.settings] : 
+   Setting model binary to /usr/local/bin/ed.git 
+2022-11-12 19:38:31 INFO   [fn] : path 
+2022-11-12 19:38:31 INFO   [fn] : path 
+2022-11-12 19:38:31 INFO   [fn] : 
+   path /data/ed_inputs/glu/ 
+2022-11-12 19:38:31 INFO   [fn] : 
+   path /data/ed_inputs/glu/ 
+2022-11-12 19:38:31 INFO   [fn] : 
+   path /data/ed_inputs/ 
+2022-11-12 19:38:31 INFO   [fn] : 
+   path /data/ed_inputs/ 
+2022-11-12 19:38:31 INFO   [fn] : 
+   path /data/oge2OLD/OGE2_ 
+2022-11-12 19:38:31 INFO   [fn] : 
+   path /data/oge2OLD/OGE2_ 
+2022-11-12 19:38:31 INFO   [fn] : 
+   path /data/faoOLD/FAO_ 
+2022-11-12 19:38:31 INFO   [fn] : 
+   path /data/faoOLD/FAO_ 
+2022-11-12 19:38:31 INFO   [fn] : 
+   Missing optional input : pss 
+2022-11-12 19:38:31 INFO   [fn] : 
+   Missing optional input : site 
+2022-11-12 19:38:31 INFO   [fn] : 
+   Missing optional input : css 
+2022-11-12 19:38:31 INFO   [fn] : 
+   Missing optional input : initcond 
+2022-11-12 19:38:31 INFO   [check.workflow.settings] : 
+   output folder = /data/workflows/PEcAn_99000025520 
+2022-11-12 19:38:31 INFO   [check.settings] : 
+   Storing pft tempconif in /data/workflows/PEcAn_99000025520/pft/tempconif 
+> 
+> # Write pecan.CHECKED.xml
+> PEcAn.settings::write.settings(settings, outputfile = "pecan.CHECKED.xml")
+[1] "/data/workflows/PEcAn_99000025520/pecan.CHECKED.xml"
+> 
+> # start from scratch if no continue is passed in
+> status_file <- file.path(settings$outdir, "STATUS")
+> if (args$continue && file.exists(status_file)) {
++   file.remove(status_file)
++ }
+> 
+> # Do conversions
+> settings <- PEcAn.workflow::do_conversions(settings)
+2022-11-12 19:38:31 DEBUG  [PEcAn.workflow::do_conversions] : 
+   do.conversion outdir /data/dbfiles 
+2022-11-12 19:38:31 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  met 
+2022-11-12 19:38:31 INFO   [PEcAn.workflow::do_conversions] : 
+   calling met.process: 
+2022-11-12 19:38:31 DEBUG  [read.register] : 
+   site 5000000001 FLUXNET2015_SUBSET_HH text/csv csv 
+2022-11-12 19:38:31 DEBUG  [PEcAn.data.atmosphere::met.process] : 
+   TRUE TRUE TRUE TRUE FALSE 
+2022-11-12 19:38:31 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_inputs download.Fluxnet2015 NA localhost 
+   /data/dbfiles/Fluxnet2015_site_0-766 FLUXNET2015_SUBSET_HH text/csv 766 
+   2004-01-01 2004-12-31 
+2022-11-12 19:38:31 INFO   [PEcAn.DB::convert_input] : 
+   start CHECK convert_inputs download.Fluxnet2015 NA localhost 
+   /data/dbfiles/Fluxnet2015_site_0-766/ FLUXNET2015_SUBSET_HH text/csv 766 
+   2004-01-01 2004-12-31 FALSE FALSE 
+2022-11-12 19:38:31 DEBUG  [PEcAn.DB::convert_input] : 
+   File id = File name = File path = Input id = 10 
+2022-11-12 19:38:31 INFO   [PEcAn.DB::convert_input] : 
+   end CHECK for existing input record. 
+2022-11-12 19:38:31 DEBUG  [PEcAn.DB::convert_input] : 
+   input.args converted to string 
+2022-11-12 19:38:31 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_input executing the following function: 
+   PEcAn.data.atmosphere::download.Fluxnet2015(sitename='Metolius-first 
+   young aged pine (US-Me5)', username='pecan', lat.in=44.4372, 
+   lon.in=-121.567, site_id=766, product=NULL, overwrite=FALSE, 
+   outfolder='/data/dbfiles/Fluxnet2015_site_0-766/', 
+   start_date='2004-01-01', end_date='2004-12-31') 
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> remotefunc <- function() {PEcAn.data.atmosphere::download.Fluxnet2015(sitename='Metolius-first young aged pine (US-Me5)', username='pecan', lat.in=44.4372, lon.in=-121.567, site_id=766, product=NULL, overwrite=FALSE, outfolder='/data/dbfiles/Fluxnet2015_site_0-766/', start_date='2004-01-01', end_date='2004-12-31')}
+> remoteout <- remotefunc()
+Error: $ operator is invalid for atomic vectors
+Execution halted
+2022-11-12 19:38:33 DEBUG  [PEcAn.remote::remote.execute.R] : 1 
+2022-11-12 19:38:33 DEBUG  [PEcAn.remote::remote.execute.R] : 1 
+2022-11-12 19:38:33 INFO   [PEcAn.DB::convert_input] : 
+   RESULTS: convert_input 
+2022-11-12 19:38:33 INFO   [PEcAn.DB::convert_input] : 1 
+2022-11-12 19:38:33 DEBUG  [PEcAn.DB::convert_input] : 
+   Processing data failed, please check validity of 
+   args:sitename='Metolius-first young aged pine (US-Me5)', 
+   username='pecan', lat.in=44.4372, lon.in=-121.567, site_id=766, 
+   product=NULL, overwrite=FALSE, 
+   outfolder='/data/dbfiles/Fluxnet2015_site_0-766/', 
+   start_date='2004-01-01', end_date='2004-12-31' 
+2022-11-12 19:38:33 SEVERE [PEcAn.DB::convert_input] : 
+   Unable to process data using this function:download.Fluxnet2015 
+> proc.time()
+   user  system elapsed 
+  3.696   0.507   4.433 

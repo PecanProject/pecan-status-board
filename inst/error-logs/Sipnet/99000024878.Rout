@@ -1,0 +1,1002 @@
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #!/usr/bin/env Rscript
+> #-------------------------------------------------------------------------------
+> # Copyright (c) 2012 University of Illinois, NCSA.
+> # All rights reserved. This program and the accompanying materials
+> # are made available under the terms of the
+> # University of Illinois/NCSA Open Source License
+> # which accompanies this distribution, and is available at
+> # http://opensource.ncsa.illinois.edu/license.html
+> #-------------------------------------------------------------------------------
+> 
+> # ----------------------------------------------------------------------
+> # Load required libraries
+> # ----------------------------------------------------------------------
+> library("PEcAn.all")
+Loading required package: PEcAn.DB
+Loading required package: PEcAn.settings
+Loading required package: PEcAn.MA
+Loading required package: PEcAn.logger
+Loading required package: PEcAn.utils
+
+Attaching package: ‘PEcAn.utils’
+
+The following object is masked from ‘package:utils’:
+
+    download.file
+
+Loading required package: PEcAn.uncertainty
+Loading required package: PEcAn.data.atmosphere
+Loading required package: PEcAn.data.land
+Loading required package: PEcAn.data.remote
+Loading required package: PEcAn.assim.batch
+Loading required package: PEcAn.emulator
+Loading required package: PEcAn.priors
+Loading required package: PEcAn.benchmark
+Loading required package: PEcAn.remote
+Loading required package: PEcAn.workflow
+> 
+> 
+> # --------------------------------------------------
+> # get command-line arguments
+> args <- get_args()
+> 
+> # make sure always to call status.end
+> options(warn = 1)
+> options(error = quote({
++   try(PEcAn.utils::status.end("ERROR"))
++   try(PEcAn.remote::kill.tunnel(settings))
++   if (!interactive()) {
++     q(status = 1)
++   }
++ }))
+> 
+> # ----------------------------------------------------------------------
+> # PEcAn Workflow
+> # ----------------------------------------------------------------------
+> # Open and read in settings file for PEcAn run.
+> settings <- PEcAn.settings::read.settings(args$settings)
+2022-11-11 17:07:14 INFO   [PEcAn.settings::read.settings] : 
+   Loading inpufile= pecan.xml 
+> 
+> # Check for additional modules that will require adding settings
+> if ("benchmarking" %in% names(settings)) {
++   library(PEcAn.benchmark)
++   settings <- papply(settings, read_settings_BRR)
++ }
+> 
+> if ("sitegroup" %in% names(settings)) {
++   if (is.null(settings$sitegroup$nSite)) {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(settings,
++       sitegroupId = settings$sitegroup$id
++     )
++   } else {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(
++       settings,
++       sitegroupId = settings$sitegroup$id,
++       nSite = settings$sitegroup$nSite
++     )
++   }
++   # zero out so don't expand a second time if re-reading
++   settings$sitegroup <- NULL
++ }
+> 
+> # Update/fix/check settings.
+> # Will only run the first time it's called, unless force=TRUE
+> settings <-
++   PEcAn.settings::prepare.settings(settings, force = FALSE)
+2022-11-11 17:07:14 INFO   [fix.deprecated.settings] : 
+   Fixing deprecated settings... 
+2022-11-11 17:07:14 INFO   [fix.deprecated.settings] : 
+   settings$run$dbfiles is deprecated. use settings$database$dbfiles 
+   instead 
+2022-11-11 17:07:14 INFO   [update.settings] : 
+   Fixing deprecated settings... 
+2022-11-11 17:07:14 INFO   [check.settings] : Checking settings... 
+2022-11-11 17:07:14 INFO   [check.database] : 
+   Successfully connected to database : postgres bety bety bety PostgreSQL 
+2022-11-11 17:07:14 INFO   [check.database.settings] : 
+   Writing all runs/configurations to database. 
+2022-11-11 17:07:15 INFO   [check.ensemble.settings] : 
+   No start date passed to ensemble - using the run date ( 2004 ). 
+2022-11-11 17:07:15 INFO   [check.ensemble.settings] : 
+   No end date passed to ensemble - using the run date ( 2004 ). 
+2022-11-11 17:07:15 INFO   [fn] : 
+   Setting site name to Willow Creek (US-WCr) 
+2022-11-11 17:07:15 INFO   [fn] : 
+   Setting site lat to 45.805925 
+2022-11-11 17:07:15 INFO   [fn] : 
+   Setting site lon to -90.07961 
+2022-11-11 17:07:15 INFO   [check.settings] : 
+   Setting meta.analysis threshold to 1.2 
+2022-11-11 17:07:15 INFO   [check.settings] : 
+   Setting meta.analysis update to only update if no previous meta analysis 
+   was found 
+2022-11-11 17:07:15 INFO   [check.model.settings] : 
+   Setting model type to SIPNET 
+2022-11-11 17:07:15 INFO   [check.model.settings] : 
+   Setting model revision to r136 
+2022-11-11 17:07:15 INFO   [check.model.settings] : 
+   Option to delete raw model output not set or not logical. Will keep all 
+   model output. 
+2022-11-11 17:07:15 INFO   [check.model.settings] : 
+   Setting model binary to /usr/local/bin/sipnet.r136 
+2022-11-11 17:07:15 INFO   [fn] : path 
+2022-11-11 17:07:15 INFO   [fn] : path 
+2022-11-11 17:07:15 INFO   [fn] : 
+   Missing optional input : poolinitcond 
+2022-11-11 17:07:15 INFO   [check.workflow.settings] : 
+   output folder = /data/workflows/PEcAn_99000024878 
+2022-11-11 17:07:15 INFO   [check.settings] : 
+   Storing pft temperate.deciduous in 
+   /data/workflows/PEcAn_99000024878/pft/temperate.deciduous 
+> 
+> # Write pecan.CHECKED.xml
+> PEcAn.settings::write.settings(settings, outputfile = "pecan.CHECKED.xml")
+[1] "/data/workflows/PEcAn_99000024878/pecan.CHECKED.xml"
+> 
+> # start from scratch if no continue is passed in
+> status_file <- file.path(settings$outdir, "STATUS")
+> if (args$continue && file.exists(status_file)) {
++   file.remove(status_file)
++ }
+> 
+> # Do conversions
+> settings <- PEcAn.workflow::do_conversions(settings)
+2022-11-11 17:07:15 DEBUG  [PEcAn.workflow::do_conversions] : 
+   do.conversion outdir /data/dbfiles 
+2022-11-11 17:07:15 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  met 
+2022-11-11 17:07:15 INFO   [PEcAn.workflow::do_conversions] : 
+   calling met.process: 
+2022-11-11 17:07:15 DEBUG  [read.register] : 
+   site 5000000002 AMERIFLUX_BASE_HH text/csv csv 
+2022-11-11 17:07:15 DEBUG  [PEcAn.data.atmosphere::met.process] : 
+   TRUE TRUE TRUE TRUE FALSE 
+2022-11-11 17:07:16 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_inputs download.AmerifluxLBL NA localhost 
+   /data/dbfiles/AmerifluxLBL_site_0-676 AMERIFLUX_BASE_HH text/csv 676 
+   2004-01-01 2004-12-31 
+2022-11-11 17:07:16 INFO   [PEcAn.DB::convert_input] : 
+   start CHECK convert_inputs download.AmerifluxLBL NA localhost 
+   /data/dbfiles/AmerifluxLBL_site_0-676/ AMERIFLUX_BASE_HH text/csv 676 
+   2004-01-01 2004-12-31 FALSE FALSE 
+2022-11-11 17:07:16 WARN   [dbfile.input.check] : 
+   Found multiple matching inputs. Checking for one with associate files on 
+   host machine 
+          id site_id notes          created_at          updated_at start_date
+1 1000012965     676       2017-05-31 12:43:34 2017-08-11 22:58:35 1979-01-01
+2 2000000386     676       2019-10-04 17:21:39 2019-10-04 17:21:39 1999-07-15
+    end_date                    name parent_id user_id access_level raw
+1 2010-01-01 AmerifluxLBL_site_0-676        NA      NA            4  NA
+2 2018-12-31 AmerifluxLBL_site_0-676        NA      NA            4  NA
+  format_id
+1     5e+09
+2     5e+09
+2022-11-11 17:07:16 DEBUG  [PEcAn.DB::convert_input] : 
+   File id = 99000003609 File name = AMF_US-WCr_BASE_HH_22-5 File path = 
+   /data/dbfiles/AmerifluxLBL_site_0-676 Input id = 1000012965 10 
+2022-11-11 17:07:16 INFO   [PEcAn.DB::convert_input] : 
+   end CHECK for existing input record. 
+2022-11-11 17:07:16 INFO   [PEcAn.DB::convert_input] : 
+   Skipping this input conversion because files are already available. 
+2022-11-11 17:07:16 INFO   [.met2cf.module] : 
+   Begin change to CF Standards 
+2022-11-11 17:07:16 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_inputs met2CF.AmerifluxLBL 1000012965 localhost 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676 CF Meteorology 
+   application/x-netcdf 676 2004-01-01 2004-12-31 
+2022-11-11 17:07:16 INFO   [PEcAn.DB::convert_input] : 
+   start CHECK convert_inputs met2CF.AmerifluxLBL 1000012965 localhost 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676/ CF Meteorology 
+   application/x-netcdf 676 2004-01-01 2004-12-31 FALSE FALSE 
+2022-11-11 17:07:16 WARN   [dbfile.input.check] : 
+   Found possible matching input. Checking if its associate files are on 
+   host machine 
+          id site_id notes          created_at          updated_at start_date
+1 1000012966     676       2017-05-31 12:43:50 2017-06-25 12:40:37 1979-01-01
+    end_date                       name  parent_id user_id access_level raw
+1 2006-12-31 AmerifluxLBL_CF_site_0-676 1000012965      NA            4  NA
+  format_id
+1        33
+2022-11-11 17:07:16 INFO   [dbfile.input.check] : 
+   File not found on host machine. Returning Valid input with file 
+   associated on different machine if possible 
+2022-11-11 17:07:16 DEBUG  [PEcAn.DB::convert_input] : 
+   File id = 5000000489 File name = AMF_US-WCr_BASE_HH_11-1 File path = 
+   /home/carya/output/dbfiles/AmerifluxLBL_CF_site_0-676 Input id = 
+   1000012966 10 
+2022-11-11 17:07:16 INFO   [PEcAn.DB::convert_input] : 
+   end CHECK for existing input record. 
+2022-11-11 17:07:16 INFO   [PEcAn.DB::convert_input] : 
+   Valid Input record found that spans desired dates, but valid files do 
+   not exist on this machine. 
+2022-11-11 17:07:16 INFO   [PEcAn.DB::convert_input] : 
+   Downloading all years of Valid input to ensure consistency 
+2022-11-11 17:07:16 DEBUG  [PEcAn.DB::convert_input] : 
+   input.args converted to string 
+2022-11-11 17:07:16 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_input executing the following function: 
+   PEcAn.data.atmosphere::met2CF.AmerifluxLBL(lat=45.805925, lon=-90.07961, 
+   overwrite=FALSE, in.path='/data/dbfiles/AmerifluxLBL_site_0-676', 
+   in.prefix='AMF_US-WCr_BASE_HH_22-5', 
+   outfolder='/data/dbfiles/AmerifluxLBL_CF_site_0-676/', 
+   start_date='1979-01-01', end_date='2006-12-31', format=list(file_name = 
+   "AMERIFLUX_BASE_HH", mimetype = "csv", vars = list(bety_name = 
+   c("air_pressure", "airT", "co2atm", "datetime", "FC", "H", "LE", "NEE", 
+   "PAR", "precipitation_flux", "relative_humidity", "soilM", "soilT", 
+   "solar_radiation", "specific_humidity", 
+   "surface_downwelling_longwave_flux_in_air", "TotalResp", "UST", "VPD", 
+   "wind_direction", "Wspd"), variable_id = c(554, 86, 135, 5000000001, 
+   1000000042, 299, 298, 297, 136, 555, 556, 391, 379, 547, 557, 561, 
+   1000000206, 1000000041, 387, 560, 390), input_name = c("PA", "TA", 
+   "CO2_1", "TIMESTAMP_START", "FC", "H", "LE", "NEE_PI", "PPFD_IN", "P", 
+   "RH", "SWC_1", "TS_1", "SW_IN", "H2O", "LW_IN", "RECO_PI", "USTAR", 
+   "VPD", "WD", "WS"), input_units = c("kPa", "celsius", "umol mol-1", 
+   "ymd_hms", "umol C m-2 s-1", "W m-2", "W m-2", "umol C m-2 s-1", "umol 
+   m-2 s-1", "kg m-2 (30 minute)-1", "percent", "%", "celsius", "W m-2", "g 
+   kg-1", "W m-2", "umol C m-2 s-1", "m s-1", "hPa", "degrees", "m s-1"), 
+   storage_type = c("", "", "", "%Y%m%d%H%M", "", "", "", "", "", "", "", 
+   "", "", "", "", "", "", "", "", "", ""), column_number = c(19, 4, 20, 1, 
+   8, 10, 12, 7, 26, 17, 18, 23, 15, 27, 33, 31, NA, 3, NA, 5, 6), 
+   bety_units = c("Pa", "degrees C", "umol [CO2] mol-1 [air]", "ymd_hms", 
+   "umol C m-2 s-1", "W m-2", "W m-2", "umol [C] m-2 s-1", "umol m-2 s-1", 
+   "kg m-2 s-1", "percent", "percent", "C", "W m-2", "g g-1", "W m-2", "kg 
+   C m-2 s-1", "m s-1", "Pa", "degrees", "m s-1"), mstmip_name = c("Psurf", 
+   "Tair", "CO2air", NA, "FC", "Qh", "Qle", "NEE", NA, "Rainf", NA, 
+   "SoilMoistFrac", "SoilTemp", "SWdown", "Qair", "LWdown", "TotalResp", 
+   NA, NA, NA, NA), mstmip_units = c("Pa", "K", "micromol mol-1", NA, "kg C 
+   m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", NA, "kg m-2 s-1", NA, "1", 
+   "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", NA, NA, NA, NA), 
+   pecan_name = c("Psurf", "Tair", "CO2air", "datetime", "FC", "Qh", "Qle", 
+   "NEE", "PAR", "Rainf", "relative_humidity", "SoilMoistFrac", "SoilTemp", 
+   "SWdown", "Qair", "LWdown", "TotalResp", "UST", "VPD", "wind_direction", 
+   "Wspd"), pecan_units = c("Pa", "K", "micromol mol-1", "ymd_hms", "kg C 
+   m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", "umol m-2 s-1", "kg m-2 
+   s-1", "percent", "1", "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", 
+   "m s-1", "Pa", "degrees", "m s-1")), skip = 2, header = 1, na.strings = 
+   c("-9999", "-6999", "9999", "NA"), time.row = 4, site = 676, lat = 
+   45.805925, lon = -90.07961, time_zone = NULL)) 
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> remotefunc <- function() {PEcAn.data.atmosphere::met2CF.AmerifluxLBL(lat=45.805925, lon=-90.07961, overwrite=FALSE, in.path='/data/dbfiles/AmerifluxLBL_site_0-676', in.prefix='AMF_US-WCr_BASE_HH_22-5', outfolder='/data/dbfiles/AmerifluxLBL_CF_site_0-676/', start_date='1979-01-01', end_date='2006-12-31', format=list(file_name = "AMERIFLUX_BASE_HH", mimetype = "csv", vars = list(bety_name = c("air_pressure", "airT", "co2atm", "datetime", "FC", "H", "LE", "NEE", "PAR", "precipitation_flux", "relative_humidity", "soilM", "soilT", "solar_radiation", "specific_humidity", "surface_downwelling_longwave_flux_in_air", "TotalResp", "UST", "VPD", "wind_direction", "Wspd"), variable_id = c(554, 86, 135, 5000000001, 1000000042, 299, 298, 297, 136, 555, 556, 391, 379, 547, 557, 561, 1000000206, 1000000041, 387, 560, 
++ 390), input_name = c("PA", "TA", "CO2_1", "TIMESTAMP_START", "FC", "H", "LE", "NEE_PI", "PPFD_IN", "P", "RH", "SWC_1", "TS_1", "SW_IN", "H2O", "LW_IN", "RECO_PI", "USTAR", "VPD", "WD", "WS"), input_units = c("kPa", "celsius", "umol mol-1", "ymd_hms", "umol C m-2 s-1", "W m-2", "W m-2", "umol C m-2 s-1", "umol m-2 s-1", "kg m-2 (30 minute)-1", "percent", "%", "celsius", "W m-2", "g kg-1", "W m-2", "umol C m-2 s-1", "m s-1", "hPa", "degrees", "m s-1"), storage_type = c("", "", "", "%Y%m%d%H%M", "", 
++ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), column_number = c(19, 4, 20, 1, 8, 10, 12, 7, 26, 17, 18, 23, 15, 27, 33, 31, NA, 3, NA, 5, 6), bety_units = c("Pa", "degrees C", "umol [CO2] mol-1 [air]", "ymd_hms", "umol C m-2 s-1", "W m-2", "W m-2", "umol [C] m-2 s-1", "umol m-2 s-1", "kg m-2 s-1", "percent", "percent", "C", "W m-2", "g g-1", "W m-2", "kg C m-2 s-1", "m s-1", "Pa", "degrees", "m s-1"), mstmip_name = c("Psurf", "Tair", "CO2air", NA, "FC", "Qh", "Qle", "NEE", NA, 
++ "Rainf", NA, "SoilMoistFrac", "SoilTemp", "SWdown", "Qair", "LWdown", "TotalResp", NA, NA, NA, NA), mstmip_units = c("Pa", "K", "micromol mol-1", NA, "kg C m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", NA, "kg m-2 s-1", NA, "1", "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", NA, NA, NA, NA), pecan_name = c("Psurf", "Tair", "CO2air", "datetime", "FC", "Qh", "Qle", "NEE", "PAR", "Rainf", "relative_humidity", "SoilMoistFrac", "SoilTemp", "SWdown", "Qair", "LWdown", "TotalResp", "UST", "VPD", "wind_direction", 
++ "Wspd"), pecan_units = c("Pa", "K", "micromol mol-1", "ymd_hms", "kg C m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", "umol m-2 s-1", "kg m-2 s-1", "percent", "1", "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", "m s-1", "Pa", "degrees", "m s-1")), skip = 2, header = 1, na.strings = c("-9999", "-6999", "9999", "NA"), time.row = 4, site = 676, lat = 45.805925, lon = -90.07961, time_zone = NULL))}
+> remoteout <- remotefunc()
+2022-11-11 17:07:17 INFO   [PEcAn.data.atmosphere::met2CF.AmerifluxLBL] : 
+   New Ameriflux format, updating format record 
+2022-11-11 17:07:17 INFO   [PEcAn.data.atmosphere::met2CF.AmerifluxLBL] : 
+   PA_1_1_1 TA_1_1_1 CO2_1_1_1 TIMESTAMP_START FC_1_1_1 H_1_1_1 LE_1_1_1 
+   NEE_PI PPFD_DIF P_PI_F RH SWC_1_1_1 TS_1_1_1 SW_IN H2O_1_1_1 LW_IN 
+   RECO_PI_F USTAR_1_1_1 VPD_PI_1_1_1 WD_1_1_1 WS_1_1_1 
+2022-11-11 17:07:17 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   Latitude is missing or NULL. Using `format$lat`. 
+2022-11-11 17:07:17 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   Longitude is missing or NULL. Using `format$lon`. 
+2022-11-11 17:07:17 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   Files 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1998.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1999.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2000.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2001.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2002.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2003.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2004.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2005.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2006.nc 
+   already exist, skipping those 
+2022-11-11 17:08:39 WARN   [PEcAn.data.atmosphere::met2CF.csv] : 
+   No site timezone. Assuming input time zone is UTC. This may be 
+   incorrect. 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1979 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1980 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1981 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1982 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1983 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1984 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1985 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1986 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1987 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1988 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1989 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1990 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1991 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1992 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1993 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1994 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1995 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1996 
+2022-11-11 17:08:40 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   File 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc 
+   has no data for year 1997 
+> print(remoteout)
+                                                                        file
+1  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc
+2  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc
+3  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc
+4  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc
+5  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc
+6  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc
+7  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc
+8  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc
+9  /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc
+10 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc
+11 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc
+12 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc
+13 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc
+14 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc
+15 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc
+16 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc
+17 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc
+18 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc
+19 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc
+20 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1998.nc
+21 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1999.nc
+22 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2000.nc
+23 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2001.nc
+24 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2002.nc
+25 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2003.nc
+26 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2004.nc
+27 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2005.nc
+28 /data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2006.nc
+     host             mimetype formatname           startdate
+1  docker application/x-netcdf         CF 1979-01-01 00:00:00
+2  docker application/x-netcdf         CF 1980-01-01 00:00:00
+3  docker application/x-netcdf         CF 1981-01-01 00:00:00
+4  docker application/x-netcdf         CF 1982-01-01 00:00:00
+5  docker application/x-netcdf         CF 1983-01-01 00:00:00
+6  docker application/x-netcdf         CF 1984-01-01 00:00:00
+7  docker application/x-netcdf         CF 1985-01-01 00:00:00
+8  docker application/x-netcdf         CF 1986-01-01 00:00:00
+9  docker application/x-netcdf         CF 1987-01-01 00:00:00
+10 docker application/x-netcdf         CF 1988-01-01 00:00:00
+11 docker application/x-netcdf         CF 1989-01-01 00:00:00
+12 docker application/x-netcdf         CF 1990-01-01 00:00:00
+13 docker application/x-netcdf         CF 1991-01-01 00:00:00
+14 docker application/x-netcdf         CF 1992-01-01 00:00:00
+15 docker application/x-netcdf         CF 1993-01-01 00:00:00
+16 docker application/x-netcdf         CF 1994-01-01 00:00:00
+17 docker application/x-netcdf         CF 1995-01-01 00:00:00
+18 docker application/x-netcdf         CF 1996-01-01 00:00:00
+19 docker application/x-netcdf         CF 1997-01-01 00:00:00
+20 docker application/x-netcdf         CF 1998-01-01 00:00:00
+21 docker application/x-netcdf         CF 1999-01-01 00:00:00
+22 docker application/x-netcdf         CF 2000-01-01 00:00:00
+23 docker application/x-netcdf         CF 2001-01-01 00:00:00
+24 docker application/x-netcdf         CF 2002-01-01 00:00:00
+25 docker application/x-netcdf         CF 2003-01-01 00:00:00
+26 docker application/x-netcdf         CF 2004-01-01 00:00:00
+27 docker application/x-netcdf         CF 2005-01-01 00:00:00
+28 docker application/x-netcdf         CF 2006-01-01 00:00:00
+               enddate             dbfile.name
+1  1979-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+2  1980-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+3  1981-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+4  1982-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+5  1983-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+6  1984-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+7  1985-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+8  1986-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+9  1987-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+10 1988-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+11 1989-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+12 1990-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+13 1991-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+14 1992-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+15 1993-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+16 1994-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+17 1995-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+18 1996-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+19 1997-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+20 1998-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+21 1999-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+22 2000-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+23 2001-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+24 2002-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+25 2003-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+26 2004-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+27 2005-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+28 2006-12-31 23:59:59 AMF_US-WCr_BASE_HH_22-5
+> fp <- file('/data/dbfiles/AmerifluxLBL_CF_site_0-676//pecan-01bfb29c4991508bb39b5ba3844c4e', 'w')
+> ign <- serialize(remoteout, fp)
+> close(fp)
+> 
+2022-11-11 17:08:40 DEBUG  [PEcAn.remote::remote.execute.R] : 0 
+2022-11-11 17:08:40 DEBUG  [PEcAn.remote::remote.execute.R] : 
+   c("/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1998.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1999.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2000.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2001.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2002.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2003.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2004.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2005.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2006.nc" 
+   ) c("docker", "docker", "docker", "docker", "docker", "docker", 
+   "docker", "docker", "docker", "docker", "docker", "docker", "docker", 
+   "docker", "docker", "docker", "docker", "docker", "docker", "docker", 
+   "docker", "docker", "docker", "docker", "docker", "docker", "docker", 
+   "docker") c("application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf") c("CF", "CF", "CF", 
+   "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", 
+   "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", 
+   "CF") c("1979-01-01 00:00:00", "1980-01-01 00:00:00", "1981-01-01 
+   00:00:00", "1982-01-01 00:00:00", "1983-01-01 00:00:00", "1984-01-01 
+   00:00:00", "1985-01-01 00:00:00", "1986-01-01 00:00:00", "1987-01-01 
+   00:00:00", "1988-01-01 00:00:00", "1989-01-01 00:00:00", "1990-01-01 
+   00:00:00", "1991-01-01 00:00:00", "1992-01-01 00:00:00", "1993-01-01 
+   00:00:00", "1994-01-01 00:00:00", "1995-01-01 00:00:00", "1996-01-01 
+   00:00:00", "1997-01-01 00:00:00", "1998-01-01 00:00:00", "1999-01-01 
+   00:00:00", "2000-01-01 00:00:00", "2001-01-01 00:00:00", "2002-01-01 
+   00:00:00", "2003-01-01 00:00:00", "2004-01-01 00:00:00", "2005-01-01 
+   00:00:00", "2006-01-01 00:00:00") c("1979-12-31 23:59:59", "1980-12-31 
+   23:59:59", "1981-12-31 23:59:59", "1982-12-31 23:59:59", "1983-12-31 
+   23:59:59", "1984-12-31 23:59:59", "1985-12-31 23:59:59", "1986-12-31 
+   23:59:59", "1987-12-31 23:59:59", "1988-12-31 23:59:59", "1989-12-31 
+   23:59:59", "1990-12-31 23:59:59", "1991-12-31 23:59:59", "1992-12-31 
+   23:59:59", "1993-12-31 23:59:59", "1994-12-31 23:59:59", "1995-12-31 
+   23:59:59", "1996-12-31 23:59:59", "1997-12-31 23:59:59", "1998-12-31 
+   23:59:59", "1999-12-31 23:59:59", "2000-12-31 23:59:59", "2001-12-31 
+   23:59:59", "2002-12-31 23:59:59", "2003-12-31 23:59:59", "2004-12-31 
+   23:59:59", "2005-12-31 23:59:59", "2006-12-31 23:59:59") 
+   c("AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5") 
+2022-11-11 17:08:40 INFO   [PEcAn.DB::convert_input] : 
+   RESULTS: convert_input 
+2022-11-11 17:08:40 INFO   [PEcAn.DB::convert_input] : 
+   list(file = 
+   c("/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1979.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1980.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1981.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1982.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1983.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1984.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1985.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1986.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1987.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1988.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1989.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1990.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1991.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1992.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1993.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1994.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1995.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1996.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1997.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1998.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.1999.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2000.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2001.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2002.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2003.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2004.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2005.nc", 
+   "/data/dbfiles/AmerifluxLBL_CF_site_0-676//AMF_US-WCr_BASE_HH_22-5.2006.nc" 
+   ), host = c("docker", "docker", "docker", "docker", "docker", "docker", 
+   "docker", "docker", "docker", "docker", "docker", "docker", "docker", 
+   "docker", "docker", "docker", "docker", "docker", "docker", "docker", 
+   "docker", "docker", "docker", "docker", "docker", "docker", "docker", 
+   "docker"), mimetype = c("application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf", "application/x-netcdf", 
+   "application/x-netcdf", "application/x-netcdf"), formatname = c("CF", 
+   "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", 
+   "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", "CF", 
+   "CF", "CF", "CF"), startdate = c("1979-01-01 00:00:00", "1980-01-01 
+   00:00:00", "1981-01-01 00:00:00", "1982-01-01 00:00:00", "1983-01-01 
+   00:00:00", "1984-01-01 00:00:00", "1985-01-01 00:00:00", "1986-01-01 
+   00:00:00", "1987-01-01 00:00:00", "1988-01-01 00:00:00", "1989-01-01 
+   00:00:00", "1990-01-01 00:00:00", "1991-01-01 00:00:00", "1992-01-01 
+   00:00:00", "1993-01-01 00:00:00", "1994-01-01 00:00:00", "1995-01-01 
+   00:00:00", "1996-01-01 00:00:00", "1997-01-01 00:00:00", "1998-01-01 
+   00:00:00", "1999-01-01 00:00:00", "2000-01-01 00:00:00", "2001-01-01 
+   00:00:00", "2002-01-01 00:00:00", "2003-01-01 00:00:00", "2004-01-01 
+   00:00:00", "2005-01-01 00:00:00", "2006-01-01 00:00:00"), enddate = 
+   c("1979-12-31 23:59:59", "1980-12-31 23:59:59", "1981-12-31 23:59:59", 
+   "1982-12-31 23:59:59", "1983-12-31 23:59:59", "1984-12-31 23:59:59", 
+   "1985-12-31 23:59:59", "1986-12-31 23:59:59", "1987-12-31 23:59:59", 
+   "1988-12-31 23:59:59", "1989-12-31 23:59:59", "1990-12-31 23:59:59", 
+   "1991-12-31 23:59:59", "1992-12-31 23:59:59", "1993-12-31 23:59:59", 
+   "1994-12-31 23:59:59", "1995-12-31 23:59:59", "1996-12-31 23:59:59", 
+   "1997-12-31 23:59:59", "1998-12-31 23:59:59", "1999-12-31 23:59:59", 
+   "2000-12-31 23:59:59", "2001-12-31 23:59:59", "2002-12-31 23:59:59", 
+   "2003-12-31 23:59:59", "2004-12-31 23:59:59", "2005-12-31 23:59:59", 
+   "2006-12-31 23:59:59"), dbfile.name = c("AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5", "AMF_US-WCr_BASE_HH_22-5", 
+   "AMF_US-WCr_BASE_HH_22-5")) 
+Error in x[[1]] : object of type 'closure' is not subsettable
+Calls: <Anonymous> ... %>% -> paste -> <Anonymous> -> reduce_impl -> reduce_init
+> proc.time()
+   user  system elapsed 
+ 82.753   3.449  87.114 

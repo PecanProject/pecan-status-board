@@ -37,7 +37,7 @@ configure_inputs <- function(met, model_name, ...) {
   input
 }
 
-test_list <- read.csv("inst/integration-test-list.csv", comment.char = "#",
+test_list <- read.csv("inst/test-data/integration-test-list.csv", comment.char = "#",
                       na.strings = "") %>%
   as_tibble() %>%
   # Only test models that are available on the target machine
@@ -59,10 +59,10 @@ test_list <- read.csv("inst/integration-test-list.csv", comment.char = "#",
   )
 
 test_runs <- test_list %>%
-  select_if(colnames(.) %in% names(formals(submit.workflow))) %>%
+   select_if(colnames(.) %in% names(formals(submit.workflow))) %>%
   mutate(submit = pmap(., submit.workflow, server = server))
 
-# Interactively check the status of runs
+#Interactively check the status of runs
 finished <- FALSE
 while (!finished) {
   # Print a summary table
@@ -86,26 +86,26 @@ models_name <- search.models(server)
 sites_name <- search.sites(server)
 stages$model_name <- models_name$models$model_name[match(stages$model_id, models_name$models$model_id)]
 stages$site_name <- sites_name$sites$sitename[match(stages$site_id, sites_name$sites$id)]
-stages$met <- test_list$met[match(stages$notes, test_list$notes)]
+stages$met <- test_list$met[match(stages$inputs, test_list$inputs)]
 
 # Generate Data 
 
 stages <- apply(stages,2,as.character)
 if ((weekdays(Sys.Date())) == "Monday") {
-  write.csv(stages, "data/monday.csv")
+  write.csv(stages, "data/overall-test/monday.csv")
 } else if ((weekdays(Sys.Date())) == "Tuesday") {
-  write.csv(stages, "data/tuesday.csv")
+  write.csv(stages, "data/overall-test/tuesday.csv")
 } else if ((weekdays(Sys.Date())) == "Wednesday") {
-  write.csv(stages, "data/wednesday.csv")
+  write.csv(stages, "data/overall-test/wednesday.csv")
 } else if ((weekdays(Sys.Date())) == "Thursday") {
-  write.csv(stages, "data/thursday.csv")
+  write.csv(stages, "data/overall-test/thursday.csv")
 } else if ((weekdays(Sys.Date())) == "Friday") {
-  write.csv(stages, "data/friday.csv")
+  write.csv(stages, "data/overall-test/friday.csv")
 } else if ((weekdays(Sys.Date())) == "Saturday") {
-  write.csv(stages, "data/saturday.csv")
+  write.csv(stages, "data/overall-test/saturday.csv")
 } else if ((weekdays(Sys.Date())) == "Sunday") {
-  write.csv(stages, "data/sunday.csv")
+  write.csv(stages, "data/overall-test/sunday.csv")
 } else {
-  write.csv(stages, "data/test_results.csv")
+  write.csv(stages, "data/overall-test/test_results.csv")
 }
 

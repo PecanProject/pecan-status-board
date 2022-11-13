@@ -1,0 +1,6 @@
+"","final_df.workflow_id","final_df.site_id","final_df.site_name","final_df.success_status","final_df.error_log","final_df.met"
+"1","99000024846","758","Harvard Forest EMS Tower/HFR1 (US-Ha1)","TRUE","PEcAn Workflow Complete ","AmerifluxLBL"
+"2","99000024847","758","Harvard Forest EMS Tower/HFR1 (US-Ha1)","TRUE","PEcAn Workflow Complete ","CRUNCEP"
+"3","99000024848","758","Harvard Forest EMS Tower/HFR1 (US-Ha1)","FALSE","Unable to process data using this function:download.NARR ","NARR"
+"4","99000024849","758","Harvard Forest EMS Tower/HFR1 (US-Ha1)","FALSE","Unable to process data using this function:download.GFDL ","GFDL"
+"5","99000024850","758","Harvard Forest EMS Tower/HFR1 (US-Ha1)","FALSE","start_date='1960-01-01', end_date='2015-12-31' ,  Unable to process data using this function:download.Fluxnet2015 ","Fluxnet2015"

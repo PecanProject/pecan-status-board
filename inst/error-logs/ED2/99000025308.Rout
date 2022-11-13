@@ -1,0 +1,515 @@
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #!/usr/bin/env Rscript
+> #-------------------------------------------------------------------------------
+> # Copyright (c) 2012 University of Illinois, NCSA.
+> # All rights reserved. This program and the accompanying materials
+> # are made available under the terms of the
+> # University of Illinois/NCSA Open Source License
+> # which accompanies this distribution, and is available at
+> # http://opensource.ncsa.illinois.edu/license.html
+> #-------------------------------------------------------------------------------
+> 
+> # ----------------------------------------------------------------------
+> # Load required libraries
+> # ----------------------------------------------------------------------
+> library("PEcAn.all")
+Loading required package: PEcAn.DB
+Loading required package: PEcAn.settings
+Loading required package: PEcAn.MA
+Loading required package: PEcAn.logger
+Loading required package: PEcAn.utils
+
+Attaching package: ‘PEcAn.utils’
+
+The following object is masked from ‘package:utils’:
+
+    download.file
+
+Loading required package: PEcAn.uncertainty
+Loading required package: PEcAn.data.atmosphere
+Loading required package: PEcAn.data.land
+Loading required package: PEcAn.data.remote
+Loading required package: PEcAn.assim.batch
+Loading required package: PEcAn.emulator
+Loading required package: PEcAn.priors
+Loading required package: PEcAn.benchmark
+Loading required package: PEcAn.remote
+Loading required package: PEcAn.workflow
+> 
+> 
+> # --------------------------------------------------
+> # get command-line arguments
+> args <- get_args()
+> 
+> # make sure always to call status.end
+> options(warn = 1)
+> options(error = quote({
++   try(PEcAn.utils::status.end("ERROR"))
++   try(PEcAn.remote::kill.tunnel(settings))
++   if (!interactive()) {
++     q(status = 1)
++   }
++ }))
+> 
+> # ----------------------------------------------------------------------
+> # PEcAn Workflow
+> # ----------------------------------------------------------------------
+> # Open and read in settings file for PEcAn run.
+> settings <- PEcAn.settings::read.settings(args$settings)
+2022-11-12 17:14:04 INFO   [PEcAn.settings::read.settings] : 
+   Loading inpufile= pecan.xml 
+> 
+> # Check for additional modules that will require adding settings
+> if ("benchmarking" %in% names(settings)) {
++   library(PEcAn.benchmark)
++   settings <- papply(settings, read_settings_BRR)
++ }
+> 
+> if ("sitegroup" %in% names(settings)) {
++   if (is.null(settings$sitegroup$nSite)) {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(settings,
++       sitegroupId = settings$sitegroup$id
++     )
++   } else {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(
++       settings,
++       sitegroupId = settings$sitegroup$id,
++       nSite = settings$sitegroup$nSite
++     )
++   }
++   # zero out so don't expand a second time if re-reading
++   settings$sitegroup <- NULL
++ }
+> 
+> # Update/fix/check settings.
+> # Will only run the first time it's called, unless force=TRUE
+> settings <-
++   PEcAn.settings::prepare.settings(settings, force = FALSE)
+2022-11-12 17:14:04 INFO   [fix.deprecated.settings] : 
+   Fixing deprecated settings... 
+2022-11-12 17:14:04 INFO   [fix.deprecated.settings] : 
+   settings$run$dbfiles is deprecated. use settings$database$dbfiles 
+   instead 
+2022-11-12 17:14:04 INFO   [update.settings] : 
+   Fixing deprecated settings... 
+2022-11-12 17:14:04 INFO   [check.settings] : Checking settings... 
+2022-11-12 17:14:04 INFO   [check.database] : 
+   Successfully connected to database : postgres bety bety bety PostgreSQL 
+2022-11-12 17:14:04 INFO   [check.database.settings] : 
+   Writing all runs/configurations to database. 
+2022-11-12 17:14:04 INFO   [check.ensemble.settings] : 
+   No start date passed to ensemble - using the run date ( 2004 ). 
+2022-11-12 17:14:04 INFO   [check.ensemble.settings] : 
+   No end date passed to ensemble - using the run date ( 2004 ). 
+2022-11-12 17:14:05 INFO   [fn] : 
+   Setting site name to Metolius-second young aged pine (US-Me3) 
+2022-11-12 17:14:05 INFO   [fn] : 
+   Setting site lat to 44.3157 
+2022-11-12 17:14:05 INFO   [fn] : 
+   Setting site lon to -121.608 
+2022-11-12 17:14:05 INFO   [check.settings] : 
+   Setting meta.analysis threshold to 1.2 
+2022-11-12 17:14:05 INFO   [check.settings] : 
+   Setting meta.analysis update to only update if no previous meta analysis 
+   was found 
+2022-11-12 17:14:05 INFO   [check.model.settings] : 
+   Setting model type to ED2 
+2022-11-12 17:14:05 INFO   [check.model.settings] : 
+   Setting model revision to git 
+2022-11-12 17:14:05 INFO   [check.model.settings] : 
+   Option to delete raw model output not set or not logical. Will keep all 
+   model output. 
+2022-11-12 17:14:05 INFO   [check.model.settings] : 
+   Setting model binary to /usr/local/bin/ed.git 
+2022-11-12 17:14:05 INFO   [fn] : path 
+2022-11-12 17:14:05 INFO   [fn] : path 
+2022-11-12 17:14:05 INFO   [fn] : 
+   path /data/ed_inputs/glu/ 
+2022-11-12 17:14:05 INFO   [fn] : 
+   path /data/ed_inputs/glu/ 
+2022-11-12 17:14:05 INFO   [fn] : 
+   path /data/ed_inputs/ 
+2022-11-12 17:14:05 INFO   [fn] : 
+   path /data/ed_inputs/ 
+2022-11-12 17:14:05 INFO   [fn] : 
+   path /data/oge2OLD/OGE2_ 
+2022-11-12 17:14:05 INFO   [fn] : 
+   path /data/oge2OLD/OGE2_ 
+2022-11-12 17:14:05 INFO   [fn] : 
+   path /data/faoOLD/FAO_ 
+2022-11-12 17:14:05 INFO   [fn] : 
+   path /data/faoOLD/FAO_ 
+2022-11-12 17:14:05 INFO   [fn] : 
+   Missing optional input : pss 
+2022-11-12 17:14:05 INFO   [fn] : 
+   Missing optional input : site 
+2022-11-12 17:14:05 INFO   [fn] : 
+   Missing optional input : css 
+2022-11-12 17:14:05 INFO   [fn] : 
+   Missing optional input : initcond 
+2022-11-12 17:14:05 INFO   [check.workflow.settings] : 
+   output folder = /data/workflows/PEcAn_99000025308 
+2022-11-12 17:14:05 INFO   [check.settings] : 
+   Storing pft tempconif in /data/workflows/PEcAn_99000025308/pft/tempconif 
+> 
+> # Write pecan.CHECKED.xml
+> PEcAn.settings::write.settings(settings, outputfile = "pecan.CHECKED.xml")
+[1] "/data/workflows/PEcAn_99000025308/pecan.CHECKED.xml"
+> 
+> # start from scratch if no continue is passed in
+> status_file <- file.path(settings$outdir, "STATUS")
+> if (args$continue && file.exists(status_file)) {
++   file.remove(status_file)
++ }
+> 
+> # Do conversions
+> settings <- PEcAn.workflow::do_conversions(settings)
+2022-11-12 17:14:05 DEBUG  [PEcAn.workflow::do_conversions] : 
+   do.conversion outdir /data/dbfiles 
+2022-11-12 17:14:05 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  met 
+2022-11-12 17:14:05 INFO   [PEcAn.workflow::do_conversions] : 
+   calling met.process: 
+2022-11-12 17:14:05 DEBUG  [read.register] : 
+   regional 33 CF Meteorology application/x-netcdf nc 
+2022-11-12 17:14:05 WARN   [read.register] : 
+   Region site id is not defined 
+2022-11-12 17:14:06 DEBUG  [PEcAn.data.atmosphere::met.process] : 
+   TRUE TRUE TRUE TRUE FALSE 
+2022-11-12 17:14:06 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_inputs download.CRUNCEP NA localhost 
+   /data/dbfiles/CRUNCEP_site_0-764 CF Meteorology application/x-netcdf 764 
+   2004-01-01 2004-12-31 
+2022-11-12 17:14:06 INFO   [PEcAn.DB::convert_input] : 
+   start CHECK convert_inputs download.CRUNCEP NA localhost 
+   /data/dbfiles/CRUNCEP_site_0-764/ CF Meteorology application/x-netcdf 
+   764 2004-01-01 2004-12-31 FALSE FALSE 
+2022-11-12 17:14:06 WARN   [dbfile.input.check] : 
+   Found multiple matching inputs. Checking for one with associate files on 
+   host machine 
+            id site_id notes          created_at          updated_at start_date
+4   1000000713     764       2016-02-05 12:04:42 2018-09-10 19:16:36 1980-01-01
+17 99000000097     764       2022-08-30 11:06:48 2022-08-30 11:06:48 2004-01-01
+     end_date               name parent_id user_id access_level raw format_id
+4  2010-12-31 CRUNCEP_site_0-764        NA      NA            4  NA        33
+17 2004-12-31 CRUNCEP_site_0-764        NA      NA            4  NA        33
+2022-11-12 17:14:06 DEBUG  [PEcAn.DB::convert_input] : 
+   File id = 99000007621 File name = CRUNCEP File path = 
+   /data/dbfiles/CRUNCEP_site_0-764 Input id = 99000000097 10 
+2022-11-12 17:14:06 INFO   [PEcAn.DB::convert_input] : 
+   end CHECK for existing input record. 
+2022-11-12 17:14:06 INFO   [PEcAn.DB::convert_input] : 
+   Skipping this input conversion because files are already available. 
+2022-11-12 17:14:06 INFO   [.met2model.module] : 
+   Begin Model Specific Conversion 
+[1] "Convert to model format"
+2022-11-12 17:14:06 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_inputs met2model.ED2 99000000097 localhost 
+   /data/dbfiles/CRUNCEP_ED2_site_0-764 ed.met_driver_header files format 
+   text/plain 764 2004-01-01 2004-12-31 
+2022-11-12 17:14:06 INFO   [PEcAn.DB::convert_input] : 
+   start CHECK convert_inputs met2model.ED2 99000000097 localhost 
+   /data/dbfiles/CRUNCEP_ED2_site_0-764/ ed.met_driver_header files format 
+   text/plain 764 2004-01-01 2004-12-31 FALSE FALSE 
+2022-11-12 17:14:06 WARN   [dbfile.input.check] : 
+   Found possible matching input. Checking if its associate files are on 
+   host machine 
+       id site_id notes          created_at          updated_at start_date
+1 9.9e+10     764       2022-08-30 11:06:53 2022-08-30 11:06:53 2004-01-01
+    end_date                   name parent_id user_id access_level raw
+1 2004-12-31 CRUNCEP_ED2_site_0-764   9.9e+10      NA            4  NA
+  format_id
+1        12
+2022-11-12 17:14:06 DEBUG  [PEcAn.DB::convert_input] : 
+   File id = 99000007622 File name = ED_MET_DRIVER_HEADER File path = 
+   /data/dbfiles/CRUNCEP_ED2_site_0-764 Input id = 99000000098 10 
+2022-11-12 17:14:06 INFO   [PEcAn.DB::convert_input] : 
+   end CHECK for existing input record. 
+2022-11-12 17:14:06 INFO   [PEcAn.DB::convert_input] : 
+   Skipping this input conversion because files are already available. 
+2022-11-12 17:14:06 INFO   [.met2model.module] : 
+   Finished Model Specific Conversion 99000000098 
+2022-11-12 17:14:06 DEBUG  [PEcAn.workflow::do_conversions] : 
+   updated met path: 
+   /data/dbfiles/CRUNCEP_ED2_site_0-764/ED_MET_DRIVER_HEADER 
+2022-11-12 17:14:06 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  lu 
+2022-11-12 17:14:06 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  thsum 
+2022-11-12 17:14:06 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  veg 
+2022-11-12 17:14:06 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  soil 
+> 
+> # Query the trait database for data and priors
+> if (PEcAn.utils::status.check("TRAIT") == 0) {
++   PEcAn.utils::status.start("TRAIT")
++   settings <- PEcAn.workflow::runModule.get.trait.data(settings)
++   PEcAn.settings::write.settings(settings,
++     outputfile = "pecan.TRAIT.xml"
++   )
++   PEcAn.utils::status.end()
++ } else if (file.exists(file.path(settings$outdir, "pecan.TRAIT.xml"))) {
++   settings <- PEcAn.settings::read.settings(file.path(settings$outdir, "pecan.TRAIT.xml"))
++ }
+2022-11-12 17:14:06 DEBUG  [PEcAn.DB::get.trait.data] : 
+   `trait.names` is NULL, so retrieving all traits that have at least one 
+   prior for these PFTs. 
+2022-11-12 17:14:06 ERROR  [PEcAn.utils::transformstats] : 
+   data contains untransformed statistics 
+2022-11-12 17:14:06 ERROR  [PEcAn.utils::transformstats] : 
+   data contains untransformed statistics 
+2022-11-12 17:14:06 ERROR  [PEcAn.utils::transformstats] : 
+   data contains untransformed statistics 
+2022-11-12 17:14:06 ERROR  [PEcAn.utils::transformstats] : 
+   data contains untransformed statistics 
+2022-11-12 17:14:06 INFO   [FUN] : 
+   Forcing meta-analysis update because the following files are missing 
+   from the posterior: 'trait.data.Rdata', 'prior.distns.Rdata', 
+   'species.csv' 
+2022-11-12 17:14:06 DEBUG  [FUN] : 
+ `dbfile.check` returned the following output:
+ # A tibble: 0 * 11
+# ... with 11 variables: id <dbl>, file_name <chr>, file_path <chr>, md5 <chr>,
+#   created_user_id <dbl>, updated_user_id <dbl>, machine_id <dbl>,
+#   created_at <chr>, updated_at <chr>, container_type <chr>,
+#   container_id <dbl> 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : SLA 
+2022-11-12 17:14:07 INFO   [query.trait.data] : Median SLA : 8.352 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : leaf_turnover_rate 
+2022-11-12 17:14:07 ERROR  [PEcAn.utils::transformstats] : 
+   data contains untransformed statistics 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   Median leaf_turnover_rate : 0.556 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : Vcmax 
+2022-11-12 17:14:07 INFO   [query.trait.data] : Median Vcmax : 66.5 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : root_turnover_rate 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   Median root_turnover_rate : 0.515 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : quantum_efficiency 
+2022-11-12 17:14:07 ERROR  [PEcAn.utils::transformstats] : 
+   data contains untransformed statistics 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   Median quantum_efficiency : 0.03 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : Jmax 
+2022-11-12 17:14:07 INFO   [query.trait.data] : Median Jmax : 29 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   root_respiration_rate 
+2022-11-12 17:14:07 ERROR  [PEcAn.utils::transformstats] : 
+   data contains untransformed statistics 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   Median root_respiration_rate : 9.242 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [query.trait.data] : fineroot2leaf 
+2022-11-12 17:14:07 ERROR  [PEcAn.utils::transformstats] : 
+   data contains untransformed statistics 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   Median fineroot2leaf : 0.986 
+2022-11-12 17:14:07 INFO   [query.trait.data] : 
+   --------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [FUN] : 
+ Number of observations per trait for PFT  'tempconif' :
+                   trait  n
+1         fineroot2leaf  2
+2                  Jmax  3
+3    leaf_turnover_rate  7
+4    quantum_efficiency  4
+5 root_respiration_rate 64
+6    root_turnover_rate  6
+7                   SLA  2
+8                 Vcmax  4 
+2022-11-12 17:14:07 INFO   [FUN] : 
+ Summary of prior distributions for PFT  'tempconif' :
+                           distn parama   paramb   n
+mort2                     gamma  1.470   0.0578   0
+water_conductance         lnorm -5.400   0.4000   0
+Jmax                       norm 40.000  32.0000  10
+Vm0                     weibull  1.350  40.0000  10
+leaf_width                gamma  3.060   0.0700  90
+root_respiration_rate     lnorm  2.070   0.4000  39
+nonlocal_dispersal         beta  1.100   1.5000   0
+stomatal_slope            lnorm  1.760   0.3800   0
+fineroot2leaf             lnorm  0.210   0.6000   0
+dark_respiration_factor   lnorm -3.900   0.4000   0
+r_fract                    beta  2.000   4.0000   0
+growth_resp_factor         beta  4.000   4.8000   0
+leaf_turnover_rate      weibull  1.370   1.4300 363
+root_turnover_rate        gamma  2.350   3.5000  19
+storage_turnover_rate     lnorm -0.690   0.1600   0
+quantum_efficiency         norm  0.057   0.0060  56
+SLA                     weibull  2.100  12.1000 967
+Vcmax                      unif  0.000 500.0000  NA 
+2022-11-12 17:14:07 DEBUG  [FUN] : The following posterior files found in PFT outdir  ( '/data/workflows/PEcAn_99000025308/pft/tempconif' ) will be registered in BETY  under posterior ID  99000001998 :  'prior.distns.csv', 'prior.distns.Rdata', 'species.csv', 'trait.data.csv', 'trait.data.Rdata' .  The following files (if any) will not be registered because they already existed:   
+> 
+> 
+> # Run the PEcAn meta.analysis
+> if (!is.null(settings$meta.analysis)) {
++   if (PEcAn.utils::status.check("META") == 0) {
++     PEcAn.utils::status.start("META")
++     PEcAn.MA::runModule.run.meta.analysis(settings)
++     PEcAn.utils::status.end()
++   }
++ }
+2022-11-12 17:14:07 INFO   [FUN] : 
+   ------------------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [FUN] : 
+   Running meta.analysis for PFT: tempconif 
+2022-11-12 17:14:07 INFO   [FUN] : 
+   ------------------------------------------------------------------- 
+2022-11-12 17:14:07 INFO   [check_consistent] : 
+   OK!  SLA data and prior are consistent: 
+2022-11-12 17:14:07 INFO   [check_consistent] : 
+   SLA P[X<x] = 0.36815024750214 
+2022-11-12 17:14:07 INFO   [check_consistent] : 
+   OK!  leaf_turnover_rate data and prior are consistent: 
+2022-11-12 17:14:07 INFO   [check_consistent] : 
+   leaf_turnover_rate P[X<x] = 0.276887500740269 
+2022-11-12 17:14:07 INFO   [check_consistent] : 
+   OK!  Vcmax data and prior are consistent: 
+2022-11-12 17:14:07 INFO   [check_consistent] : Vcmax P[X<x] = 0.133 
+2022-11-12 17:14:07 INFO   [check_consistent] : 
+   OK!  root_turnover_rate data and prior are consistent: 
+2022-11-12 17:14:07 INFO   [check_consistent] : 
+   root_turnover_rate P[X<x] = 0.434111370481585 
+2022-11-12 17:14:07 DEBUG  [check_consistent] : 
+   NOT OK!  quantum_efficiency data and prior are probably not the same: 
+> 
+> # Write model specific configs
+> if (PEcAn.utils::status.check("CONFIG") == 0) {
++   PEcAn.utils::status.start("CONFIG")
++   settings <-
++     PEcAn.workflow::runModule.run.write.configs(settings)
++   PEcAn.settings::write.settings(settings, outputfile = "pecan.CONFIGS.xml")
++   PEcAn.utils::status.end()
++ } else if (file.exists(file.path(settings$outdir, "pecan.CONFIGS.xml"))) {
++   settings <- PEcAn.settings::read.settings(file.path(settings$outdir, "pecan.CONFIGS.xml"))
++ }
+2022-11-12 17:14:07 INFO   [PEcAn.uncertainty::get.parameter.samples] : 
+   Selected PFT(s): tempconif 
+Warning in rm(prior.distns, post.distns, trait.mcmc) :
+  object 'prior.distns' not found
+Warning in rm(prior.distns, post.distns, trait.mcmc) :
+  object 'post.distns' not found
+Warning in rm(prior.distns, post.distns, trait.mcmc) :
+  object 'trait.mcmc' not found
+2022-11-12 17:14:07 INFO   [PEcAn.uncertainty::get.parameter.samples] : 
+   No trait.mcmc file is associated with this posterior ID. 
+2022-11-12 17:14:07 INFO   [PEcAn.uncertainty::get.parameter.samples] : 
+   No MCMC results for PFT tempconif 
+2022-11-12 17:14:07 INFO   [PEcAn.uncertainty::get.parameter.samples] : 
+   PFT tempconif will use prior distributions for mort2 water_conductance 
+   Jmax Vm0 leaf_width root_respiration_rate nonlocal_dispersal 
+   stomatal_slope fineroot2leaf dark_respiration_factor r_fract 
+   growth_resp_factor leaf_turnover_rate root_turnover_rate 
+   storage_turnover_rate quantum_efficiency SLA Vcmax 
+2022-11-12 17:14:07 INFO   [PEcAn.uncertainty::get.parameter.samples] : 
+   using 20000 samples per trait 
+Loading required package: PEcAn.ED2
+[1] " "
+[1] "---- Removing previous ED2 config files and output before starting new run ----"
+[1] " "
+c(tempconif = 7L)
+2022-11-12 17:14:08 DEBUG  [write.config.xml.ED2] : 
+   --- Using Generic ED2 History File: history.csv 
+Warning in data(list = histfile, package = "PEcAn.ED2", envir = environment()) :
+  data set ‘history’ not found
+2022-11-12 17:14:08 DEBUG  [write.config.xml.ED2] : 
+   Automatically assigning PFT `tempconif` number `7` based on 
+   `pftmapping`. If you want to avoid this behavior, set the PFT number 
+   explicitly via the `<ed2_pft_number>` XML tag. 
+2022-11-12 17:14:08 INFO   [write.config.ED2] : 
+   Using /usr/local/lib/R/site-library/PEcAn.ED2/ED2IN.r2.2.0 as template 
+2022-11-12 17:14:08 WARN   [read_ed2in] : 
+   Old substitution tags present in ED2IN file 
+2022-11-12 17:14:08 DEBUG  [write.config.ED2] : 
+   Running with only these PFTs (set by config.xml): 7 
+2022-11-12 17:14:08 INFO   [PEcAn.workflow::run.write.configs] : 
+   ###### Finished writing model run config files ##### 
+2022-11-12 17:14:08 INFO   [PEcAn.workflow::run.write.configs] : 
+   config files samples in /data/workflows/PEcAn_99000025308/run 
+2022-11-12 17:14:08 INFO   [PEcAn.workflow::run.write.configs] : 
+   parameter values for runs in 
+   /data/workflows/PEcAn_99000025308/samples.RData 
+> 
+> if ((length(which(commandArgs() == "--advanced")) != 0)
++ && (PEcAn.utils::status.check("ADVANCED") == 0)) {
++   PEcAn.utils::status.start("ADVANCED")
++   q()
++ }
+> 
+> # Start ecosystem model runs
+> if (PEcAn.utils::status.check("MODEL") == 0) {
++   PEcAn.utils::status.start("MODEL")
++   stop_on_error <- as.logical(settings[[c("run", "stop_on_error")]])
++   if (length(stop_on_error) == 0) {
++     # If we're doing an ensemble run, don't stop. If only a single run, we
++     # should be stopping.
++     if (is.null(settings[["ensemble"]]) ||
++           as.numeric(settings[[c("ensemble", "size")]]) == 1) {
++       stop_on_error <- TRUE
++     } else {
++       stop_on_error <- FALSE
++     }
++   }
++   PEcAn.workflow::runModule_start_model_runs(settings, stop.on.error = stop_on_error)
++   PEcAn.utils::status.end()
++ }
+2022-11-12 17:14:09 INFO   [start_model_runs] : 
+   ------------------------------------------------------------------- 
+2022-11-12 17:14:09 INFO   [start_model_runs] : 
+   Starting model runs ED2 
+2022-11-12 17:14:09 INFO   [start_model_runs] : 
+   ------------------------------------------------------------------- 
+  |                                                                              |                                                                      |   0%2022-11-12 17:14:09 DEBUG  [start_model_runs] : 
+   JOB.SH submit status: TRUE 
+
+2022-11-12 17:14:09 DEBUG  [start_model_runs] : 
+   Waiting for the following jobs: 
+   /data/workflows/PEcAn_99000025308/run/99000016429 
+2022-11-12 17:14:19 SEVERE [start_model_runs] : 
+   Run 99000016429 has an ERROR executing 
+> proc.time()
+   user  system elapsed 
+  5.517   0.370  16.380 
