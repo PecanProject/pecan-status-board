@@ -26,11 +26,18 @@ app_ui <- function() {
       
       shinydashboard::dashboardSidebar(
         shinydashboard::sidebarMenu(
-          shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-          shinydashboard::menuItem("Test", tabName = "test", icon = icon("bolt")),
-          shinydashboard::menuItem("Report", tabName = "report", icon = icon("chart-line"),
-                                   shinydashboard::menuSubItem("Weekly Status", tabName = "weekly", icon = icon("calendar")),
-                                   shinydashboard::menuSubItem("Workflows Status", tabName = "workflows", icon = icon("tasks")))
+          shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard",  verify_fa = FALSE)),
+          shinydashboard::menuItem("Test", tabName = "test", icon = icon("bolt",  verify_fa = FALSE)),
+          shinydashboard::menuItem("Overall Report", tabName = "report", icon = icon("chart-line",  verify_fa = FALSE),
+                                   shinydashboard::menuSubItem("Weekly Status", tabName = "weekly", icon = icon("calendar",  verify_fa = FALSE)),
+                                   shinydashboard::menuSubItem("Workflows Status", tabName = "workflows", icon = icon("tasks",  verify_fa = FALSE))),
+          shinydashboard::menuItem("Models", tabName = "models", icon = icon("chart-line",  verify_fa = FALSE),
+                                   shinydashboard::menuSubItem("SIPNET", tabName = "sipnet", icon = icon("square-s",  verify_fa = FALSE)),
+                                   #shinydashboard::menuSubItem("BIOCRO", tabName = "biocro", icon = icon("square-b",  verify_fa = FALSE)),
+                                   shinydashboard::menuSubItem("ED2.2", tabName = "ed2", icon = icon("square-e",  verify_fa = FALSE)),
+                                   #shinydashboard::menuSubItem("BASGRA", tabName = "basgra", icon = icon("circle-B",  verify_fa = FALSE)),
+                                   shinydashboard::menuSubItem("MAESPA", tabName = "maespa", icon = icon("square-C",  verify_fa = FALSE))
+                                                                     )
         )),
       
       shinydashboard::dashboardBody(
@@ -38,14 +45,20 @@ app_ui <- function() {
           shinydashboard::tabItem("dashboard", mod_dashboard_ui("dashboard_ui_1")),
           shinydashboard::tabItem("test", mod_test_ui("test_ui_1")),
           shinydashboard::tabItem("weekly", mod_weekly_report_ui("weekly_report_ui_1")),
-          shinydashboard::tabItem("workflows", mod_workflows_satus_ui("workflows_satus_ui_1")
+          shinydashboard::tabItem("workflows", mod_workflows_satus_ui("workflows_satus_ui_1")),
+          shinydashboard::tabItem("models", mod_workflows_satus_ui("models_ui_1")),
+          shinydashboard::tabItem("sipnet", mod_sipnet_ui("sipnet_1")),
+          shinydashboard::tabItem("basgra", mod_basgra_ui("basgra_1")),
+          shinydashboard::tabItem("maespa", mod_maespa_ui("maespa_1")),
+          shinydashboard::tabItem("ed2", mod_ed2_ui("ed2_1")),
+          shinydashboard::tabItem("biocro", mod_biocro_ui("biocro_1"))
+          
           )
         ),
         # rightsidebar = NULL,
         # title = "Pecan Status Board"
       )
     )
-  )
 }
 
 #' Add external Resources to the Application

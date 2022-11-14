@@ -1,0 +1,382 @@
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #!/usr/bin/env Rscript
+> #-------------------------------------------------------------------------------
+> # Copyright (c) 2012 University of Illinois, NCSA.
+> # All rights reserved. This program and the accompanying materials
+> # are made available under the terms of the
+> # University of Illinois/NCSA Open Source License
+> # which accompanies this distribution, and is available at
+> # http://opensource.ncsa.illinois.edu/license.html
+> #-------------------------------------------------------------------------------
+> 
+> # ----------------------------------------------------------------------
+> # Load required libraries
+> # ----------------------------------------------------------------------
+> library("PEcAn.all")
+Loading required package: PEcAn.DB
+Loading required package: PEcAn.settings
+Loading required package: PEcAn.MA
+Loading required package: PEcAn.logger
+Loading required package: PEcAn.utils
+
+Attaching package: ‘PEcAn.utils’
+
+The following object is masked from ‘package:utils’:
+
+    download.file
+
+Loading required package: PEcAn.uncertainty
+Loading required package: PEcAn.data.atmosphere
+Loading required package: PEcAn.data.land
+Loading required package: PEcAn.data.remote
+Loading required package: PEcAn.assim.batch
+Loading required package: PEcAn.emulator
+Loading required package: PEcAn.priors
+Loading required package: PEcAn.benchmark
+Loading required package: PEcAn.remote
+Loading required package: PEcAn.workflow
+> 
+> 
+> # --------------------------------------------------
+> # get command-line arguments
+> args <- get_args()
+> 
+> # make sure always to call status.end
+> options(warn = 1)
+> options(error = quote({
++   try(PEcAn.utils::status.end("ERROR"))
++   try(PEcAn.remote::kill.tunnel(settings))
++   if (!interactive()) {
++     q(status = 1)
++   }
++ }))
+> 
+> # ----------------------------------------------------------------------
+> # PEcAn Workflow
+> # ----------------------------------------------------------------------
+> # Open and read in settings file for PEcAn run.
+> settings <- PEcAn.settings::read.settings(args$settings)
+2022-11-12 17:46:56 INFO   [PEcAn.settings::read.settings] : 
+   Loading inpufile= pecan.xml 
+> 
+> # Check for additional modules that will require adding settings
+> if ("benchmarking" %in% names(settings)) {
++   library(PEcAn.benchmark)
++   settings <- papply(settings, read_settings_BRR)
++ }
+> 
+> if ("sitegroup" %in% names(settings)) {
++   if (is.null(settings$sitegroup$nSite)) {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(settings,
++       sitegroupId = settings$sitegroup$id
++     )
++   } else {
++     settings <- PEcAn.settings::createSitegroupMultiSettings(
++       settings,
++       sitegroupId = settings$sitegroup$id,
++       nSite = settings$sitegroup$nSite
++     )
++   }
++   # zero out so don't expand a second time if re-reading
++   settings$sitegroup <- NULL
++ }
+> 
+> # Update/fix/check settings.
+> # Will only run the first time it's called, unless force=TRUE
+> settings <-
++   PEcAn.settings::prepare.settings(settings, force = FALSE)
+2022-11-12 17:46:56 INFO   [fix.deprecated.settings] : 
+   Fixing deprecated settings... 
+2022-11-12 17:46:56 INFO   [fix.deprecated.settings] : 
+   settings$run$dbfiles is deprecated. use settings$database$dbfiles 
+   instead 
+2022-11-12 17:46:56 INFO   [update.settings] : 
+   Fixing deprecated settings... 
+2022-11-12 17:46:56 INFO   [check.settings] : Checking settings... 
+2022-11-12 17:46:57 INFO   [check.database] : 
+   Successfully connected to database : postgres bety bety bety PostgreSQL 
+2022-11-12 17:46:57 INFO   [check.database.settings] : 
+   Writing all runs/configurations to database. 
+2022-11-12 17:46:57 INFO   [check.ensemble.settings] : 
+   No start date passed to ensemble - using the run date ( 2004 ). 
+2022-11-12 17:46:57 INFO   [check.ensemble.settings] : 
+   No end date passed to ensemble - using the run date ( 2004 ). 
+2022-11-12 17:46:57 INFO   [fn] : 
+   Setting site name to Morgan Monroe State Forest (US-MMS) 
+2022-11-12 17:46:57 INFO   [fn] : 
+   Setting site lat to 39.3231 
+2022-11-12 17:46:57 INFO   [fn] : 
+   Setting site lon to -86.4131 
+2022-11-12 17:46:57 INFO   [check.settings] : 
+   Setting meta.analysis threshold to 1.2 
+2022-11-12 17:46:57 INFO   [check.settings] : 
+   Setting meta.analysis update to only update if no previous meta analysis 
+   was found 
+2022-11-12 17:46:57 INFO   [check.model.settings] : 
+   Setting model type to ED2 
+2022-11-12 17:46:57 INFO   [check.model.settings] : 
+   Setting model revision to git 
+2022-11-12 17:46:57 INFO   [check.model.settings] : 
+   Option to delete raw model output not set or not logical. Will keep all 
+   model output. 
+2022-11-12 17:46:57 INFO   [check.model.settings] : 
+   Setting model binary to /usr/local/bin/ed.git 
+2022-11-12 17:46:57 INFO   [fn] : path 
+2022-11-12 17:46:57 INFO   [fn] : path 
+2022-11-12 17:46:57 INFO   [fn] : 
+   path /data/ed_inputs/glu/ 
+2022-11-12 17:46:57 INFO   [fn] : 
+   path /data/ed_inputs/glu/ 
+2022-11-12 17:46:57 INFO   [fn] : 
+   path /data/ed_inputs/ 
+2022-11-12 17:46:57 INFO   [fn] : 
+   path /data/ed_inputs/ 
+2022-11-12 17:46:57 INFO   [fn] : 
+   path /data/oge2OLD/OGE2_ 
+2022-11-12 17:46:57 INFO   [fn] : 
+   path /data/oge2OLD/OGE2_ 
+2022-11-12 17:46:58 INFO   [fn] : 
+   path /data/faoOLD/FAO_ 
+2022-11-12 17:46:58 INFO   [fn] : 
+   path /data/faoOLD/FAO_ 
+2022-11-12 17:46:58 INFO   [fn] : 
+   Missing optional input : pss 
+2022-11-12 17:46:58 INFO   [fn] : 
+   Missing optional input : site 
+2022-11-12 17:46:58 INFO   [fn] : 
+   Missing optional input : css 
+2022-11-12 17:46:58 INFO   [fn] : 
+   Missing optional input : initcond 
+2022-11-12 17:46:58 INFO   [check.workflow.settings] : 
+   output folder = /data/workflows/PEcAn_99000025390 
+2022-11-12 17:46:58 INFO   [check.settings] : 
+   Storing pft tempdecid in /data/workflows/PEcAn_99000025390/pft/tempdecid 
+> 
+> # Write pecan.CHECKED.xml
+> PEcAn.settings::write.settings(settings, outputfile = "pecan.CHECKED.xml")
+[1] "/data/workflows/PEcAn_99000025390/pecan.CHECKED.xml"
+> 
+> # start from scratch if no continue is passed in
+> status_file <- file.path(settings$outdir, "STATUS")
+> if (args$continue && file.exists(status_file)) {
++   file.remove(status_file)
++ }
+> 
+> # Do conversions
+> settings <- PEcAn.workflow::do_conversions(settings)
+2022-11-12 17:46:58 DEBUG  [PEcAn.workflow::do_conversions] : 
+   do.conversion outdir /data/dbfiles 
+2022-11-12 17:46:58 INFO   [PEcAn.workflow::do_conversions] : PROCESSING:  met 
+2022-11-12 17:46:58 INFO   [PEcAn.workflow::do_conversions] : 
+   calling met.process: 
+2022-11-12 17:46:58 DEBUG  [read.register] : 
+   site 5000000002 AMERIFLUX_BASE_HH text/csv csv 
+2022-11-12 17:46:58 DEBUG  [PEcAn.data.atmosphere::met.process] : 
+   TRUE TRUE TRUE TRUE FALSE 
+2022-11-12 17:46:58 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_inputs download.AmerifluxLBL NA localhost 
+   /data/dbfiles/AmerifluxLBL_site_0-767 AMERIFLUX_BASE_HH text/csv 767 
+   2004-01-01 2004-12-31 
+2022-11-12 17:46:58 INFO   [PEcAn.DB::convert_input] : 
+   start CHECK convert_inputs download.AmerifluxLBL NA localhost 
+   /data/dbfiles/AmerifluxLBL_site_0-767/ AMERIFLUX_BASE_HH text/csv 767 
+   2004-01-01 2004-12-31 FALSE FALSE 
+2022-11-12 17:46:58 WARN   [dbfile.input.check] : 
+   Found possible matching input. Checking if its associate files are on 
+   host machine 
+          id site_id notes          created_at          updated_at start_date
+1 1000013317     767       2017-06-19 16:39:02 2018-02-25 20:59:55 1999-01-01
+    end_date                    name parent_id user_id access_level raw
+1 2014-12-31 AmerifluxLBL_site_0-767        NA      NA            4  NA
+  format_id
+1     5e+09
+2022-11-12 17:46:58 DEBUG  [PEcAn.DB::convert_input] : 
+   File id = 99000007679 File name = AMF_US-MMS_BASE_HR_21-5 File path = 
+   /data/dbfiles/AmerifluxLBL_site_0-767 Input id = 1000013317 10 
+2022-11-12 17:46:58 INFO   [PEcAn.DB::convert_input] : 
+   end CHECK for existing input record. 
+2022-11-12 17:46:58 INFO   [PEcAn.DB::convert_input] : 
+   Skipping this input conversion because files are already available. 
+2022-11-12 17:46:58 INFO   [.met2cf.module] : 
+   Begin change to CF Standards 
+2022-11-12 17:46:58 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_inputs met2CF.AmerifluxLBL 1000013317 localhost 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-767 CF Meteorology 
+   application/x-netcdf 767 2004-01-01 2004-12-31 
+2022-11-12 17:46:58 INFO   [PEcAn.DB::convert_input] : 
+   start CHECK convert_inputs met2CF.AmerifluxLBL 1000013317 localhost 
+   /data/dbfiles/AmerifluxLBL_CF_site_0-767/ CF Meteorology 
+   application/x-netcdf 767 2004-01-01 2004-12-31 FALSE FALSE 
+2022-11-12 17:46:58 WARN   [dbfile.input.check] : 
+   Found possible matching input. Checking if its associate files are on 
+   host machine 
+          id site_id notes          created_at          updated_at start_date
+1 1000013321     767       2017-06-19 18:17:35 2017-06-19 18:17:35 2005-01-01
+    end_date                       name  parent_id user_id access_level raw
+1 2006-12-31 AmerifluxLBL_CF_site_0-767 1000013317      NA            4  NA
+  format_id
+1        33
+2022-11-12 17:46:58 INFO   [dbfile.input.check] : 
+   File not found on host machine. Returning Valid input with file 
+   associated on different machine if possible 
+2022-11-12 17:46:58 DEBUG  [PEcAn.DB::convert_input] : 
+   File id = File name = File path = Input id = 10 
+2022-11-12 17:46:58 INFO   [PEcAn.DB::convert_input] : 
+   end CHECK for existing input record. 
+2022-11-12 17:46:58 DEBUG  [PEcAn.DB::convert_input] : 
+   input.args converted to string 
+2022-11-12 17:46:58 DEBUG  [PEcAn.DB::convert_input] : 
+   convert_input executing the following function: 
+   PEcAn.data.atmosphere::met2CF.AmerifluxLBL(lat=39.3231, lon=-86.4131, 
+   overwrite=FALSE, in.path='/data/dbfiles/AmerifluxLBL_site_0-767', 
+   in.prefix='AMF_US-MMS_BASE_HR_21-5', 
+   outfolder='/data/dbfiles/AmerifluxLBL_CF_site_0-767/', 
+   start_date='2004-01-01', end_date='2004-12-31', format=list(file_name = 
+   "AMERIFLUX_BASE_HH", mimetype = "csv", vars = list(bety_name = 
+   c("air_pressure", "airT", "co2atm", "datetime", "FC", "H", "LE", "NEE", 
+   "PAR", "precipitation_flux", "relative_humidity", "soilM", "soilT", 
+   "solar_radiation", "specific_humidity", 
+   "surface_downwelling_longwave_flux_in_air", "TotalResp", "UST", "VPD", 
+   "wind_direction", "Wspd"), variable_id = c(554, 86, 135, 5000000001, 
+   1000000042, 299, 298, 297, 136, 555, 556, 391, 379, 547, 557, 561, 
+   1000000206, 1000000041, 387, 560, 390), input_name = c("PA", "TA", 
+   "CO2_1", "TIMESTAMP_START", "FC", "H", "LE", "NEE_PI", "PPFD_IN", "P", 
+   "RH", "SWC_1", "TS_1", "SW_IN", "H2O", "LW_IN", "RECO_PI", "USTAR", 
+   "VPD", "WD", "WS"), input_units = c("kPa", "celsius", "umol mol-1", 
+   "ymd_hms", "umol C m-2 s-1", "W m-2", "W m-2", "umol C m-2 s-1", "umol 
+   m-2 s-1", "kg m-2 (30 minute)-1", "percent", "%", "celsius", "W m-2", "g 
+   kg-1", "W m-2", "umol C m-2 s-1", "m s-1", "hPa", "degrees", "m s-1"), 
+   storage_type = c("", "", "", "%Y%m%d%H%M", "", "", "", "", "", "", "", 
+   "", "", "", "", "", "", "", "", "", ""), column_number = c(19, 4, 20, 1, 
+   8, 10, 12, 7, 26, 17, 18, 23, 15, 27, 33, 31, NA, 3, NA, 5, 6), 
+   bety_units = c("Pa", "degrees C", "umol [CO2] mol-1 [air]", "ymd_hms", 
+   "umol C m-2 s-1", "W m-2", "W m-2", "umol [C] m-2 s-1", "umol m-2 s-1", 
+   "kg m-2 s-1", "percent", "percent", "C", "W m-2", "g g-1", "W m-2", "kg 
+   C m-2 s-1", "m s-1", "Pa", "degrees", "m s-1"), mstmip_name = c("Psurf", 
+   "Tair", "CO2air", NA, "FC", "Qh", "Qle", "NEE", NA, "Rainf", NA, 
+   "SoilMoistFrac", "SoilTemp", "SWdown", "Qair", "LWdown", "TotalResp", 
+   NA, NA, NA, NA), mstmip_units = c("Pa", "K", "micromol mol-1", NA, "kg C 
+   m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", NA, "kg m-2 s-1", NA, "1", 
+   "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", NA, NA, NA, NA), 
+   pecan_name = c("Psurf", "Tair", "CO2air", "datetime", "FC", "Qh", "Qle", 
+   "NEE", "PAR", "Rainf", "relative_humidity", "SoilMoistFrac", "SoilTemp", 
+   "SWdown", "Qair", "LWdown", "TotalResp", "UST", "VPD", "wind_direction", 
+   "Wspd"), pecan_units = c("Pa", "K", "micromol mol-1", "ymd_hms", "kg C 
+   m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", "umol m-2 s-1", "kg m-2 
+   s-1", "percent", "1", "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", 
+   "m s-1", "Pa", "degrees", "m s-1")), skip = 2, header = 1, na.strings = 
+   c("-9999", "-6999", "9999", "NA"), time.row = 4, site = 767, lat = 
+   39.3231, lon = -86.4131, time_zone = NULL)) 
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> remotefunc <- function() {PEcAn.data.atmosphere::met2CF.AmerifluxLBL(lat=39.3231, lon=-86.4131, overwrite=FALSE, in.path='/data/dbfiles/AmerifluxLBL_site_0-767', in.prefix='AMF_US-MMS_BASE_HR_21-5', outfolder='/data/dbfiles/AmerifluxLBL_CF_site_0-767/', start_date='2004-01-01', end_date='2004-12-31', format=list(file_name = "AMERIFLUX_BASE_HH", mimetype = "csv", vars = list(bety_name = c("air_pressure", "airT", "co2atm", "datetime", "FC", "H", "LE", "NEE", "PAR", "precipitation_flux", "relative_humidity", "soilM", "soilT", "solar_radiation", "specific_humidity", "surface_downwelling_longwave_flux_in_air", "TotalResp", "UST", "VPD", "wind_direction", "Wspd"), variable_id = c(554, 86, 135, 5000000001, 1000000042, 299, 298, 297, 136, 555, 556, 391, 379, 547, 557, 561, 1000000206, 1000000041, 387, 560, 
++ 390), input_name = c("PA", "TA", "CO2_1", "TIMESTAMP_START", "FC", "H", "LE", "NEE_PI", "PPFD_IN", "P", "RH", "SWC_1", "TS_1", "SW_IN", "H2O", "LW_IN", "RECO_PI", "USTAR", "VPD", "WD", "WS"), input_units = c("kPa", "celsius", "umol mol-1", "ymd_hms", "umol C m-2 s-1", "W m-2", "W m-2", "umol C m-2 s-1", "umol m-2 s-1", "kg m-2 (30 minute)-1", "percent", "%", "celsius", "W m-2", "g kg-1", "W m-2", "umol C m-2 s-1", "m s-1", "hPa", "degrees", "m s-1"), storage_type = c("", "", "", "%Y%m%d%H%M", "", 
++ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), column_number = c(19, 4, 20, 1, 8, 10, 12, 7, 26, 17, 18, 23, 15, 27, 33, 31, NA, 3, NA, 5, 6), bety_units = c("Pa", "degrees C", "umol [CO2] mol-1 [air]", "ymd_hms", "umol C m-2 s-1", "W m-2", "W m-2", "umol [C] m-2 s-1", "umol m-2 s-1", "kg m-2 s-1", "percent", "percent", "C", "W m-2", "g g-1", "W m-2", "kg C m-2 s-1", "m s-1", "Pa", "degrees", "m s-1"), mstmip_name = c("Psurf", "Tair", "CO2air", NA, "FC", "Qh", "Qle", "NEE", NA, 
++ "Rainf", NA, "SoilMoistFrac", "SoilTemp", "SWdown", "Qair", "LWdown", "TotalResp", NA, NA, NA, NA), mstmip_units = c("Pa", "K", "micromol mol-1", NA, "kg C m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", NA, "kg m-2 s-1", NA, "1", "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", NA, NA, NA, NA), pecan_name = c("Psurf", "Tair", "CO2air", "datetime", "FC", "Qh", "Qle", "NEE", "PAR", "Rainf", "relative_humidity", "SoilMoistFrac", "SoilTemp", "SWdown", "Qair", "LWdown", "TotalResp", "UST", "VPD", "wind_direction", 
++ "Wspd"), pecan_units = c("Pa", "K", "micromol mol-1", "ymd_hms", "kg C m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", "umol m-2 s-1", "kg m-2 s-1", "percent", "1", "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", "m s-1", "Pa", "degrees", "m s-1")), skip = 2, header = 1, na.strings = c("-9999", "-6999", "9999", "NA"), time.row = 4, site = 767, lat = 39.3231, lon = -86.4131, time_zone = NULL))}
+> remoteout <- remotefunc()
+2022-11-12 17:46:59 INFO   [PEcAn.data.atmosphere::met2CF.AmerifluxLBL] : 
+   New Ameriflux format, updating format record 
+2022-11-12 17:47:00 INFO   [PEcAn.data.atmosphere::met2CF.AmerifluxLBL] : 
+   PA_1_1_1 TA_1_1_1 CO2_1_1_1 TIMESTAMP_START FC_1_1_1 H_1_1_1 LE_1_1_1 
+   NEE_PI PPFD_BC_IN_1_1_1 P_1_1_1 RH_1_1_1 SWC_1_1_1 TS_2_1_1 
+   SW_BC_IN_1_1_1 H2O_1_1_1 LW_BC_IN_1_1_1 RECO_PI_1_1_1 USTAR_1_1_1 
+   VPD_PI_1_1_1 WD_1_1_1 WS_1_1_1 
+2022-11-12 17:47:00 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   Latitude is missing or NULL. Using `format$lat`. 
+2022-11-12 17:47:00 DEBUG  [PEcAn.data.atmosphere::met2CF.csv] : 
+   Longitude is missing or NULL. Using `format$lon`. 
+2022-11-12 17:47:15 WARN   [PEcAn.data.atmosphere::met2CF.csv] : 
+   No site timezone. Assuming input time zone is UTC. This may be 
+   incorrect. 
+Error in UseMethod("set_units") : 
+  no applicable method for 'set_units' applied to an object of class "difftime"
+Calls: remotefunc ... <Anonymous> -> <Anonymous> -> mean -> <Anonymous> -> <Anonymous>
+Execution halted
+2022-11-12 17:47:16 DEBUG  [PEcAn.remote::remote.execute.R] : 1 
+2022-11-12 17:47:16 DEBUG  [PEcAn.remote::remote.execute.R] : 1 
+2022-11-12 17:47:16 INFO   [PEcAn.DB::convert_input] : 
+   RESULTS: convert_input 
+2022-11-12 17:47:16 INFO   [PEcAn.DB::convert_input] : 1 
+2022-11-12 17:47:16 DEBUG  [PEcAn.DB::convert_input] : 
+   Processing data failed, please check validity of args:lat=39.3231, 
+   lon=-86.4131, overwrite=FALSE, 
+   in.path='/data/dbfiles/AmerifluxLBL_site_0-767', 
+   in.prefix='AMF_US-MMS_BASE_HR_21-5', 
+   outfolder='/data/dbfiles/AmerifluxLBL_CF_site_0-767/', 
+   start_date='2004-01-01', end_date='2004-12-31', format=list(file_name = 
+   "AMERIFLUX_BASE_HH", mimetype = "csv", vars = list(bety_name = 
+   c("air_pressure", "airT", "co2atm", "datetime", "FC", "H", "LE", "NEE", 
+   "PAR", "precipitation_flux", "relative_humidity", "soilM", "soilT", 
+   "solar_radiation", "specific_humidity", 
+   "surface_downwelling_longwave_flux_in_air", "TotalResp", "UST", "VPD", 
+   "wind_direction", "Wspd"), variable_id = c(554, 86, 135, 5000000001, 
+   1000000042, 299, 298, 297, 136, 555, 556, 391, 379, 547, 557, 561, 
+   1000000206, 1000000041, 387, 560, 390), input_name = c("PA", "TA", 
+   "CO2_1", "TIMESTAMP_START", "FC", "H", "LE", "NEE_PI", "PPFD_IN", "P", 
+   "RH", "SWC_1", "TS_1", "SW_IN", "H2O", "LW_IN", "RECO_PI", "USTAR", 
+   "VPD", "WD", "WS"), input_units = c("kPa", "celsius", "umol mol-1", 
+   "ymd_hms", "umol C m-2 s-1", "W m-2", "W m-2", "umol C m-2 s-1", "umol 
+   m-2 s-1", "kg m-2 (30 minute)-1", "percent", "%", "celsius", "W m-2", "g 
+   kg-1", "W m-2", "umol C m-2 s-1", "m s-1", "hPa", "degrees", "m s-1"), 
+   storage_type = c("", "", "", "%Y%m%d%H%M", "", "", "", "", "", "", "", 
+   "", "", "", "", "", "", "", "", "", ""), column_number = c(19, 4, 20, 1, 
+   8, 10, 12, 7, 26, 17, 18, 23, 15, 27, 33, 31, NA, 3, NA, 5, 6), 
+   bety_units = c("Pa", "degrees C", "umol [CO2] mol-1 [air]", "ymd_hms", 
+   "umol C m-2 s-1", "W m-2", "W m-2", "umol [C] m-2 s-1", "umol m-2 s-1", 
+   "kg m-2 s-1", "percent", "percent", "C", "W m-2", "g g-1", "W m-2", "kg 
+   C m-2 s-1", "m s-1", "Pa", "degrees", "m s-1"), mstmip_name = c("Psurf", 
+   "Tair", "CO2air", NA, "FC", "Qh", "Qle", "NEE", NA, "Rainf", NA, 
+   "SoilMoistFrac", "SoilTemp", "SWdown", "Qair", "LWdown", "TotalResp", 
+   NA, NA, NA, NA), mstmip_units = c("Pa", "K", "micromol mol-1", NA, "kg C 
+   m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", NA, "kg m-2 s-1", NA, "1", 
+   "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", NA, NA, NA, NA), 
+   pecan_name = c("Psurf", "Tair", "CO2air", "datetime", "FC", "Qh", "Qle", 
+   "NEE", "PAR", "Rainf", "relative_humidity", "SoilMoistFrac", "SoilTemp", 
+   "SWdown", "Qair", "LWdown", "TotalResp", "UST", "VPD", "wind_direction", 
+   "Wspd"), pecan_units = c("Pa", "K", "micromol mol-1", "ymd_hms", "kg C 
+   m-2 s-1", "W m-2", "W m-2", "kg C m-2 s-1", "umol m-2 s-1", "kg m-2 
+   s-1", "percent", "1", "K", "W/m^2", "kg kg-1", "W/m2", "kg C m-2 s-1", 
+   "m s-1", "Pa", "degrees", "m s-1")), skip = 2, header = 1, na.strings = 
+   c("-9999", "-6999", "9999", "NA"), time.row = 4, site = 767, lat = 
+   39.3231, lon = -86.4131, time_zone = NULL) 
+2022-11-12 17:47:16 SEVERE [PEcAn.DB::convert_input] : 
+   Unable to process data using this function:met2CF.AmerifluxLBL 
+> proc.time()
+   user  system elapsed 
+ 19.926   0.919  21.063 

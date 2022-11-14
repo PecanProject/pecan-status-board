@@ -23,6 +23,7 @@ time_diff <- function(df) {
 # Calcuates time difference of the models
 
 model_time_diff <- function(df) {
+  df <- testrun_report()
   df <- as.data.frame(workflow_status(df))
   df <- subset(df, select = -c(TRAIT,META,CONFIG,OUTPUT,ENSEMBLE,FINISHED))
   df <- tidyr::separate(data = df, col = MODEL, into = c("status","start_time", "end_time","final_status" ), sep = "  ")
@@ -37,25 +38,25 @@ model_time_diff <- function(df) {
 
 weekly_time_diff <- function(){
   # Time difference of models on monday.    
-  report <- get_csv_file("data/monday.csv")
+  report <- read.csv("data/overall-test/monday.csv")
   mon <- model_time_diff(report)
   # Time difference of models on tuesday.  
-  report <- get_csv_file("data/tuesday.csv")
+  report <- read.csv("data/overall-test/tuesday.csv")
   tue <- model_time_diff(report)
   # Time difference of models on wednesday.  
-  report <- get_csv_file("data/wednesday.csv")
+  report <- read.csv("data/overall-test/wednesday.csv")
   wed <- model_time_diff(report)
   # Time difference of models on thursday.  
-  report <- get_csv_file("data/thursday.csv")
+  report <- read.csv("data/overall-test/thursday.csv")
   thu <- model_time_diff(report)
   # Time difference of models on friday.  
-  report <- get_csv_file("data/friday.csv")
+  report <- read.csv("data/overall-test/friday.csv")
   fri <- model_time_diff(report)
   # Time difference of models on saturday.  
-  report <- get_csv_file("data/saturday.csv")
+  report <- read.csv("data/overall-test/saturday.csv")
   sat <- model_time_diff(report)
   # Time difference of models on sunday.  
-  report <- get_csv_file("data/sunday.csv")
+  report <- read.csv("data/overall-test/sunday.csv")
   sun <- model_time_diff(report)
   
   df <- tibble::tibble(

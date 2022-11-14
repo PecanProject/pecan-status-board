@@ -1,0 +1,6 @@
+model_name,revision,pfts,site_id,met,start_date,end_date,sensitivity.analysis,ensemble_size,notes
+MAESPA,git,broadleaf_evergreen_forest,758,AmerifluxLBL,,,FALSE,1,Harvard Forest EMS Tower/HFR1 (US-Ha1)
+MAESPA,git,broadleaf_evergreen_forest,758,CRUNCEP,,,FALSE,1,Harvard Forest EMS Tower/HFR1 (US-Ha1)
+MAESPA,git,broadleaf_evergreen_forest,758,NARR,,,FALSE,1,Harvard Forest EMS Tower/HFR1 (US-Ha1)
+MAESPA,git,broadleaf_evergreen_forest,758,GFDL,,,FALSE,1,Harvard Forest EMS Tower/HFR1 (US-Ha1)
+MAESPA,git,broadleaf_evergreen_forest,758,Fluxnet2015,,,FALSE,1,Harvard Forest EMS Tower/HFR1 (US-Ha1)
