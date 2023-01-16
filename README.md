@@ -90,6 +90,6 @@ Distributed under the NCSA Open Source License. See `LICENSE` for more informati
 
 ## Feedback
 
-*We all need people who will give us feedback. That’s how we improve.* **- Bill Gates**
+*"We all need people who will give us feedback. That’s how we improve."* **- Bill Gates**
 
 We would love to hear from you if you are experiencing any issues or have any suggestions. Please [click here to raise an issue](https://github.com/PecanProject/pecan-status-board/issues/new).
