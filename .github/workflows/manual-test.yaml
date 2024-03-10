@@ -46,6 +46,7 @@ jobs:
             devtools::install_github("PecanProject/rpecanapi")
             install.packages("dplyr")
             install.packages("tidyr")
+            install.packages("curl")
           shell: Rscript {0}
           
         - name: Generate data
