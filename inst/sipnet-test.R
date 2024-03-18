@@ -5,9 +5,11 @@ library(tibble)
 library(purrr)
 library(httr)
 library(glue)
+source("../config/config.R")
+host_url <- host_url
 
 # Modify for your target machine and authentication
-server <- connect("http://pecan.localhost/", "ashiklom", "admin")
+server <- connect(host_url, "ashiklom", "admin")
 
 # List all available models
 models <- GET(
