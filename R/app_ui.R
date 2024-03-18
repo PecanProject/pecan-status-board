@@ -26,17 +26,17 @@ app_ui <- function() {
       
       shinydashboard::dashboardSidebar(
         shinydashboard::sidebarMenu(
-          shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard",  verify_fa = FALSE)),
-          shinydashboard::menuItem("Test", tabName = "test", icon = icon("bolt",  verify_fa = FALSE)),
-          shinydashboard::menuItem("Overall Report", tabName = "report", icon = icon("chart-line",  verify_fa = FALSE),
-                                   shinydashboard::menuSubItem("Weekly Status", tabName = "weekly", icon = icon("calendar",  verify_fa = FALSE)),
-                                   shinydashboard::menuSubItem("Workflows Status", tabName = "workflows", icon = icon("tasks",  verify_fa = FALSE))),
-          shinydashboard::menuItem("Models", tabName = "models", icon = icon("chart-line",  verify_fa = FALSE),
-                                   shinydashboard::menuSubItem("SIPNET", tabName = "sipnet", icon = icon("square-s",  verify_fa = FALSE)),
+          shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = shiny::icon("dashboard", lib = "font-awesome")),
+          shinydashboard::menuItem("Test", tabName = "test", icon = icon("bolt",  lib="font-awesome")),
+          shinydashboard::menuItem("Overall Report", tabName = "report", icon = shiny::icon("chart-line",  lib="font-awesome"),
+                                   shinydashboard::menuSubItem("Weekly Status", tabName = "weekly", icon = shiny::icon("calendar",  lib="font-awesome")),
+                                   shinydashboard::menuSubItem("Workflows Status", tabName = "workflows", icon = shiny::icon("tasks",  lib="font-awesome"))),
+          shinydashboard::menuItem("Models", tabName = "models", icon = shiny::icon("chart-line", lib="font-awesome"),
+                                   shinydashboard::menuSubItem("SIPNET", tabName = "sipnet", icon = shiny::icon("square", lib="font-awesome")),
                                    #shinydashboard::menuSubItem("BIOCRO", tabName = "biocro", icon = icon("square-b",  verify_fa = FALSE)),
-                                   shinydashboard::menuSubItem("ED2.2", tabName = "ed2", icon = icon("square-e",  verify_fa = FALSE)),
+                                   shinydashboard::menuSubItem("ED2.2", tabName = "ed2", icon = shiny::icon("square", lib="font-awesome")),
                                    #shinydashboard::menuSubItem("BASGRA", tabName = "basgra", icon = icon("circle-B",  verify_fa = FALSE)),
-                                   shinydashboard::menuSubItem("MAESPA", tabName = "maespa", icon = icon("square-C",  verify_fa = FALSE))
+                                   shinydashboard::menuSubItem("MAESPA", tabName = "maespa", icon = shiny::icon("square", lib="font-awesome"))
                                                                      )
         )),
       
