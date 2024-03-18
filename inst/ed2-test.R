@@ -7,7 +7,7 @@ library(httr)
 library(glue)
 
 # Modify for your target machine and authentication
-server <- connect("http://141.142.217.168/", "ashiklom", "admin")
+server <- connect("http://pecan.localhost/", "ashiklom", "admin")
 
 # List all available models
 models <- GET(
