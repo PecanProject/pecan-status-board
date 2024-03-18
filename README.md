@@ -36,7 +36,7 @@ library("statusboard")
 
 ### Running The Dashboard
 
-Now, within the `config/config.R` file, you can set the `host_url` to the PEcAn API server you want to monitor. By default, it is set to the PEcAn API server hosted at [http://pecan.localhost/](http://pecan.localhost/).
+Now, within the `config/config.R` file, you can set the `host_url` to the PEcAn dockerised server you want to monitor. By default, it is set to the PEcAn API server hosted at [http://pecan.localhost/](http://pecan.localhost/).
 
 ``` r
 # Run this code to start the dashboard locally
