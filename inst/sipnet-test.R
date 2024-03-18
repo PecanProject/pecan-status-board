@@ -5,7 +5,7 @@ library(tibble)
 library(purrr)
 library(httr)
 library(glue)
-source("../config/config.R")
+source("config/config.R")
 host_url <- host_url
 
 # Modify for your target machine and authentication

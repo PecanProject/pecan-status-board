@@ -8,7 +8,7 @@
 #' @import tibble
 #'
 #' @noRd
-source("../config/config.R")
+source("config/config.R")
 host_url <- host_url
 
 workflow_status <- function(report){
