@@ -32,11 +32,11 @@ app_ui <- function() {
                                    shinydashboard::menuSubItem("Weekly Status", tabName = "weekly", icon = icon("calendar",  verify_fa = FALSE)),
                                    shinydashboard::menuSubItem("Workflows Status", tabName = "workflows", icon = icon("tasks",  verify_fa = FALSE))),
           shinydashboard::menuItem("Models", tabName = "models", icon = icon("chart-line",  verify_fa = FALSE),
-                                   shinydashboard::menuSubItem("SIPNET", tabName = "sipnet", icon = icon("square-s",  verify_fa = FALSE)),
+                                   shinydashboard::menuSubItem("SIPNET", tabName = "sipnet", icon = icon("square", lib="font-awesome")),
                                    #shinydashboard::menuSubItem("BIOCRO", tabName = "biocro", icon = icon("square-b",  verify_fa = FALSE)),
-                                   shinydashboard::menuSubItem("ED2.2", tabName = "ed2", icon = icon("square-e",  verify_fa = FALSE)),
+                                   shinydashboard::menuSubItem("ED2.2", tabName = "ed2", icon = icon("square", lib="font-awesome")),
                                    #shinydashboard::menuSubItem("BASGRA", tabName = "basgra", icon = icon("circle-B",  verify_fa = FALSE)),
-                                   shinydashboard::menuSubItem("MAESPA", tabName = "maespa", icon = icon("square-C",  verify_fa = FALSE))
+                                   shinydashboard::menuSubItem("MAESPA", tabName = "maespa", icon = icon("square", lib="font-awesome"))
                                                                      )
         )),
       
