@@ -29,15 +29,20 @@ The PEcan Status Board can be installed locally from [GitHub](https://github.com
 # install.packages("devtools")
 devtools::install_github("PecanProject/pecan-status-board")
 ```
-``` r 
+
+``` r
 library("statusboard")
 ```
+
 ### Running The Dashboard
+
+Now, within the `config/config.R` file, you can set the `host_url` to the PEcAn API server you want to monitor. By default, it is set to the PEcAn API server hosted at [http://pecan.localhost/](http://pecan.localhost/).
+
 ``` r
 # Run this code to start the dashboard locally
 statusboard::run_app()
-
 ```
+
 ## Visualization
 
 Data Visualization refers to the graphical representation of information and data in the form of a graph, or chart, or bar, or any other format. The purpose of Data Visualization is to convey information and results quickly and easily.
