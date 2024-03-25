@@ -5,9 +5,10 @@ library(tibble)
 library(purrr)
 library(httr)
 library(glue)
+source("config/config.R")
 
 # Modify for your target machine and authentication
-server <- connect("http://141.142.217.168/", "ashiklom", "admin")
+server <- connect(host_url, "ashiklom", "admin")
 
 # List all available models
 models <- GET(

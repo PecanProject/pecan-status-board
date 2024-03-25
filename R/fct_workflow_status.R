@@ -8,10 +8,10 @@
 #' @import tibble
 #'
 #' @noRd
-
+source("config/config.R")
 
 workflow_status <- function(report){
-  server <- rpecanapi::connect("http://141.142.217.168/", "carya", "illinois")
+  server <- rpecanapi::connect(host_url, "carya", "illinois")
   id <- report$workflow_id
   result <- data.frame()
   for (i in id) {
