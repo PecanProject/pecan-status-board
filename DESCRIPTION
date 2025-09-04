@@ -3,7 +3,7 @@ Title: PEcAn Status Board
 Version: 1.0.0
 Authors@R: person('Akhil', 'Jha', email = 'Akhilkumarjha9@gmail.com', role = c('cre', 'aut'))
 Description: Displays the status of integration testing
-License: NCSA
+License: BSD_3_clause + file LICENSE
 Imports: 
     config (>= 0.3.1),
     dplyr,
